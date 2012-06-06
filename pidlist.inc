@@ -5,122 +5,182 @@ public $userlist;
 public $pidlist;
 public $listname;  
 public $listid; 
+public $listowner;
+public $useruid;
+public $session = FALSE;
 
-public function __construct($retrieve = FALSE, $users, $pids = NULL, $name = NULL, $id = NULL) {
-  $this->userlist = $users;
-    
-  if (!empty($pids))
-    $this->pidlist = $pids;
-     
-  if (!empty($name))
-    $this->listname = $name;
+public function __construct($params = array()) {
+  $this->userlist = $params['listusers'];
+  $this->useruid = $params['useruid'];  
   
-  if (!empty($id))
-    $this->listid = $id;
- 
-  if ($retrieve == FALSE) {
+  if ($this->useruid == 0) {
+  $this->session = TRUE;
+  }
+  
+  if (!empty($params['listpids'])) {
+    $this->pidlist = $params['listpids'];
+  }
+  
+  if (!empty($params['listname'])) {
+    $this->listname = $params['listname'];
+  }
+  
+  if (!empty($params['listid'])) {
+    $this->listid = $params['listid'];
+  }
+  
+  if (!$params['retrieve']) {
     $this->create_list();
    }
+  else {
+    $this->listowner = $params['listowner'];
+  } 
 }  
 
 public function remove_pids($pids) {
   $this->pidlist = array_diff($this->pidlist, $pids);
   
-  foreach ($pids as $value) {
-  $this->remove_pid_db($value);
+  if (!$this->session) {
+    foreach ($pids as $value) {
+      $this->remove_pid_db($value);
+    }
+  } 
+  else {
+    $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
+     
+    foreach ($superserial->pidlist as $key => $value) {
+     if (in_array($value,$pids)) {
+     unset($superserial->pidlist[$key]);
+     $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
+     }
+    }
   }
 }
 
 public function remove_users($users) {
   $this->userlist = array_diff($this->userlist, $users);
   
-  foreach ($pids as $value) {
-  $this->remove_user_db($value);
- }
+  if (!$this->session) {
+    foreach ($users as $value) {
+      $this->remove_user_db($value);
+    }
+  }
+  else {
+    $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
+     
+    foreach ($superserial->userlist as $key => $value) {
+     if (in_array($value,$users)) {
+     unset($superserial->userlist[$key]);
+     $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
+     }
+    }
+  }
 }
 
 public function add_pids($pids) {
   foreach ($pids as $key => $value) {
     if (!in_array($value,$this->pidlist)) {
-    array_push($this->pidlist, $value);
+      array_push($this->pidlist, $value);
     
-    // Session + DB 
-    $this->add_pid_db($value);
+      if (!$this->session) {
+        $this->add_pid_db($value);
+      }
+      else {
+          $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
+          $superserial->pidlist[] = $value;     
+      }
     }
   }  
 }
 public function add_users($users) {
   foreach ($users as $key => $value) {
-    if (!in_array($value,$this->userlist)) {
-    array_push($this->userlist, $value);
+      if (!in_array($value,$this->userlist)) {
+      array_push($this->userlist, $value);
     
-    // Session + DB CONDITION
-    $this->add_user_db($value);
-    }
-  }
+        if (!$this->session) {
+          $this->add_user_db($value);
+        }
+        else {
+          $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
+          $superserial->userlist[] = $value;     
+       }
+     }
+   }
 }
 
 private function create_list() {
-   // Session + DB CONDITION
-   db_query("INSERT INTO {islandora_pid_list_names} (listname) VALUES ('%s')", $this->listname);
-   
-   // Use db_next_id for D7
+  
+  $this->listowner = $this->useruid;
+  
+  if (!$this->session) {
+   db_query("INSERT INTO {islandora_pid_list_names} (listname, listowner) VALUES ('%s',%d)", $this->listname, $this->useruid);
    $this->listid = db_last_insert_id('{islandora_pid_list_names}', 'listid');
-        
-   foreach ($this->userlist as $key => $value) {
-     db_query("INSERT INTO {islandora_pid_list_lists} (uid, listid) VALUES (%d,%d)", $value, $this->listid);
-   }
    
-   foreach ($this->pidlist as $key => $value) {
-     db_query("INSERT INTO {islandora_pid_list_pids} (listid, pidid) VALUES (%d,'%s')", $this->listid, $value);
-   }
+     foreach ($this->userlist as $key => $value) {
+       db_query("INSERT INTO {islandora_pid_list_lists} (uid, listid) VALUES (%d,%d)", $value, $this->listid);
+     }
+     foreach ($this->pidlist as $key => $value) {
+       db_query("INSERT INTO {islandora_pid_list_pids} (listid, pidid) VALUES (%d,'%s')", $this->listid, $value);
+     }
   }
+  else {
+    // Add to session
+    $index = count($_SESSION['islandora_pid_list']);
+    $this->listid = $index;
+    $_SESSION['islandora_pid_list'][$index] = serialize($this);
+   }
+}
+
  
 public function remove_list() {
-  // Session + DB CONDITION
-  db_query("DELETE FROM {islandora_pid_list_names} WHERE listid = %d", $this->listid);
+  if (!$this->session) {
+    db_query("DELETE FROM {islandora_pid_list_names} WHERE listid = %d", $this->listid);
   
-  foreach ($this->userlist as $key => $value) {
-    db_query("DELETE FROM {islandora_pid_list_lists} WHERE listid = %d", $this->listid);
-  }
+    foreach ($this->userlist as $key => $value) {
+      db_query("DELETE FROM {islandora_pid_list_lists} WHERE listid = %d", $this->listid);
+    }
   
-  foreach ($this->pidlist as $key => $value) {
-    db_query("DELETE FROM {islandora_pid_list_pids} WHERE listid = %d", $this->listid);
+    foreach ($this->pidlist as $key => $value) {
+      db_query("DELETE FROM {islandora_pid_list_pids} WHERE listid = %d", $this->listid);
+    }
   }
-  }
+  else {
+   dsm($_SESSION['islandora_pid_list'], 'before unset');
+   unset($_SESSION['islandora_pid_list'][$this->listid]);
+   dsm($_SESSION['islandora_pid_list'], "after unset");
+  } 
+}
   
-private function remove_user_db($user) {
-db_query("DELETE FROM {islandora_pid_list_lists} WHERE uid = %d AND listid = %d", $user, $this->listid);
+private function remove_user_db($userdelete) {
+  db_query("DELETE FROM {islandora_pid_list_lists} WHERE uid = %d AND listid = %d", $userdelete, $this->listid);
 }
 
-private function add_user_db($user) {
-db_query("INSERT INTO {islandora_pid_list_lists} (uid, listid) VALUES (%d,%d)", $user, $this->listid);
+private function add_user_db($useradd) {
+  db_query("INSERT INTO {islandora_pid_list_lists} (uid, listid) VALUES (%d,%d)", $useradd, $this->listid);
 }
 
-private function remove_pids_db($pids) {
+private function remove_pid_db($pids) {
   foreach ($pids as $key => $value) {
     db_query("DELETE FROM {islandora_pid_list_pids} WHERE pidid = '%s'", $value);
   }
 }
 
-private function add_pids_db($pids) {
+private function add_pid_db($pids) {
   foreach ($pids as $key => $value) {
     db_query("INSERT INTO {islandora_pid_list_pids} (listid, pidid) VALUES (%d, '%s')", $this->listid, $value);
   }
 }
 
 public function change_list_name($name) {
+  $this -> listname = $name;
+  if (!$session) {
   db_query("UPDATE {islandora_pid_list_names} SET listname = '%s' WHERE listid = %d", $name, $this->listid);
-}
-
-public function arr_exist($array, $val) {
-  foreach ($array as $item => $value)
-  {
-    if ($value == $val) {
-      return TRUE;
-   }
   }
-  return FALSE;
+  else {
+  $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
+  $superserial->listname[$key][$this->listid][$name];   
+  }
+  
 }
 
 }
