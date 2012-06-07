@@ -49,10 +49,10 @@ public function remove_pids($pids) {
     $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
      
     foreach ($superserial->pidlist as $key => $value) {
-     if (in_array($value,$pids)) {
-     unset($superserial->pidlist[$key]);
-     $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
-     }
+      if (in_array($value,$pids)) {
+        unset($superserial->pidlist[$key]);
+        $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
+      }
     }
   }
 }
@@ -62,7 +62,13 @@ public function remove_users($users) {
   
   if (!$this->session) {
     foreach ($users as $value) {
-      $this->remove_user_db($value);
+      if ($this->useruid == $this->listowner) {
+        $this->remove_user_db($value);
+      }
+      else {
+        dsm("You aren't the owner of this list");
+        // Meaningful error replaces
+      }
     }
   }
   else {
@@ -70,8 +76,8 @@ public function remove_users($users) {
      
     foreach ($superserial->userlist as $key => $value) {
      if (in_array($value,$users)) {
-     unset($superserial->userlist[$key]);
-     $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
+      unset($superserial->userlist[$key]);
+      $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
      }
     }
   }
@@ -98,7 +104,13 @@ public function add_users($users) {
       array_push($this->userlist, $value);
     
         if (!$this->session) {
-          $this->add_user_db($value);
+          if ($this->useruid == $this->listowner) {
+            $this->add_user_db($value);
+          }
+          else {
+            dsm("You aren't the owner of this list");
+            // Meaningful error
+          }
         }
         else {
           $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
@@ -108,8 +120,8 @@ public function add_users($users) {
    }
 }
 
-private function create_list() {
-  
+public function create_list() {
+  dsm("Create list called");
   $this->listowner = $this->useruid;
   
   if (!$this->session) {
@@ -134,14 +146,20 @@ private function create_list() {
  
 public function remove_list() {
   if (!$this->session) {
-    db_query("DELETE FROM {islandora_pid_list_names} WHERE listid = %d", $this->listid);
+    if ($this->useruid == $this->listowner) {
+      db_query("DELETE FROM {islandora_pid_list_names} WHERE listid = %d", $this->listid);
   
-    foreach ($this->userlist as $key => $value) {
-      db_query("DELETE FROM {islandora_pid_list_lists} WHERE listid = %d", $this->listid);
-    }
+        foreach ($this->userlist as $key => $value) {
+          db_query("DELETE FROM {islandora_pid_list_lists} WHERE listid = %d", $this->listid);
+        }
   
-    foreach ($this->pidlist as $key => $value) {
-      db_query("DELETE FROM {islandora_pid_list_pids} WHERE listid = %d", $this->listid);
+        foreach ($this->pidlist as $key => $value) {
+          db_query("DELETE FROM {islandora_pid_list_pids} WHERE listid = %d", $this->listid);
+        }
+      }
+    else {
+      dsm("You aren't the owner of this list");
+      // Meaningful error
     }
   }
   else {
@@ -181,6 +199,13 @@ public function change_list_name($name) {
   $superserial->listname[$key][$this->listid][$name];   
   }
   
+}
+
+public function set_session($param) {
+  if (is_bool($param))
+  {
+    $this->session = $param;
+  }
 }
 
 }

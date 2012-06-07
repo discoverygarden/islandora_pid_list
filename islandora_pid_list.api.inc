@@ -2,7 +2,6 @@
 class Islandora_Pid_List_Helper {
   
   public function get_user_pid_list($uid) {
-    // SESSION CHECKING THINGER IF SESSION JUST GRAB FROM SESSION TABLE?
     module_load_include('inc', 'islandora_pid_list', 'pidlist');
     
     // If user is not an anon
