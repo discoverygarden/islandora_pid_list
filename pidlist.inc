@@ -62,15 +62,9 @@ public function remove_users($users) {
   
   if (!$this->session) {
     foreach ($users as $value) {
-      if ($this->useruid == $this->listowner) {
-        $this->remove_user_db($value);
-      }
-      else {
-        dsm("You aren't the owner of this list");
-        // Meaningful error replaces
+      $this->remove_user_db($value);
       }
     }
-  }
   else {
     $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
      
@@ -101,16 +95,10 @@ public function add_pids($pids) {
 public function add_users($users) {
   foreach ($users as $key => $value) {
       if (!in_array($value,$this->userlist)) {
-      array_push($this->userlist, $value);
+        array_push($this->userlist, $value);
     
         if (!$this->session) {
-          if ($this->useruid == $this->listowner) {
-            $this->add_user_db($value);
-          }
-          else {
-            dsm("You aren't the owner of this list");
-            // Meaningful error
-          }
+          $this->add_user_db($value);
         }
         else {
           $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
@@ -146,22 +134,16 @@ public function create_list() {
  
 public function remove_list() {
   if (!$this->session) {
-    if ($this->useruid == $this->listowner) {
-      db_query("DELETE FROM {islandora_pid_list_names} WHERE listid = %d", $this->listid);
+    db_query("DELETE FROM {islandora_pid_list_names} WHERE listid = %d", $this->listid);
   
-        foreach ($this->userlist as $key => $value) {
-          db_query("DELETE FROM {islandora_pid_list_lists} WHERE listid = %d", $this->listid);
-        }
-  
-        foreach ($this->pidlist as $key => $value) {
-          db_query("DELETE FROM {islandora_pid_list_pids} WHERE listid = %d", $this->listid);
-        }
+    foreach ($this->userlist as $key => $value) {
+      db_query("DELETE FROM {islandora_pid_list_lists} WHERE listid = %d", $this->listid);
       }
-    else {
-      dsm("You aren't the owner of this list");
-      // Meaningful error
+  
+    foreach ($this->pidlist as $key => $value) {
+      db_query("DELETE FROM {islandora_pid_list_pids} WHERE listid = %d", $this->listid);
+      }
     }
-  }
   else {
    dsm($_SESSION['islandora_pid_list'], 'before unset');
    unset($_SESSION['islandora_pid_list'][$this->listid]);
