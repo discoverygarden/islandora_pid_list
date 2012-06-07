@@ -1,0 +1,38 @@
+<?php
+// In D7 this is changed to hook_user_login()
+function islandora_pid_list_user($op, &$edit, &$account, $category = NULL) {
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
+  if ($op == 'login') {
+    if (!empty($_SESSION['islandora_pid_list'])) {
+       foreach($_SESSION['islandora_pid_list'] as $key => $value)
+       {
+        $pidlistsession = unserialize($value);
+        $pidlistsession->set_session(FALSE);
+        $pidlistsession->create_list();
+        unset($_SESSION['islandora_pid_list'][$key]);
+       }
+    }
+  }
+}
+
+function islandora_pid_list_menu() {
+$items['admin/pidlist'] = array (
+  'title' => 'Islandora Pid List',
+  'description' => "Track and manage list of pids",
+  'page callback' => 'drupal_get_form',
+  'page arguments' => array('islandora_pid_list_form'),
+  'access arguments' => array('access content'),
+  'file' => 'pid_list_form.inc',
+  'type' => MENU_CALLBACK,
+  );
+    return $items;
+}
+
+
+
+
+
+
+
+
+
