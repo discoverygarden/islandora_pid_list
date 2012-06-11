@@ -16,14 +16,13 @@ function islandora_pid_list_user($op, &$edit, &$account, $category = NULL) {
 }
 
 function islandora_pid_list_menu() {
-$items['admin/pidlist'] = array (
+$items['pidlist'] = array (
   'title' => 'Islandora Pid List',
   'description' => "Track and manage list of pids",
-  'page callback' => 'drupal_get_form',
-  'page arguments' => array('islandora_pid_list_form'),
+  'page callback' => 'islandora_pid_list_view',
   'access arguments' => array('access content'),
   'file' => 'pid_list_form.inc',
-  'type' => MENU_CALLBACK,
+  'type' => MENU_NORMAL_ITEM,
   );
     return $items;
 }

@@ -37,13 +37,13 @@ class Islandora_Pid_List_Helper {
       $listid = $value;
     
       $params = array(
-        "retrieve" => TRUE,
-        "useruid" => $uid,
-        "listowner" => $listresult['listowner'],
-        "listusers" => $listusers,
-        "listpids" => $listpids,
-        "listname" => $listresult['listname'],
-        "listid" => $listid
+        'retrieve' => TRUE,
+        'useruid' => $uid,
+        'listowner' => $listresult['listowner'],
+        'listusers' => $listusers,
+        'listpids' => $listpids,
+        'listname' => $listresult['listname'],
+        'listid' => $listid
       );
       $templist = new PidList($params);
        
@@ -62,4 +62,4 @@ class Islandora_Pid_List_Helper {
     return $pidlist;
     }
   }
- }
+}

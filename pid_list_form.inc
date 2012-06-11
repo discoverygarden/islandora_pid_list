@@ -1,36 +1,55 @@
 <?php
 
-function islandora_pid_list_form(array &$form_state) {
-  global $user;
+function islandora_pid_list_forms($form_id, $args) {
+  $forms = array();
+  
+  if (strpos($form_id, 'islandora_pid_list_form_') !== FALSE) {
+    $forms[$form_id] = array (
+      'callback' => 'islandora_pid_list_form',
+      'callback arguments' => array($form_id, $args),
+    );
+  } 
+ return $forms;
+}
+
+function islandora_pid_list_form($form_state, $form_id, $args) {
+  $value = $args[0][0];
+  $key = $args[0][1];
+  
   module_load_include('inc', 'islandora_pid_list', 'pidlist');
-  module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
   
-  $pidlisthelper = new Islandora_Pid_List_Helper();
-  $pidlist = $pidlisthelper->get_user_pid_list($user->uid);
   
-  foreach ($pidlist as $key => $value) {
-    $titlefield = array( 
+  
+  $titlefield = array( 
      '#type' => 'fieldset',
      '#collapsible' => TRUE,
      '#collapsed'=> TRUE,
-     '#title' => $value->listname . ' [ID:' . $value->listid . ']'
+     '#title' => $value->listname . ' [ID:' . $value->listid . ']',
+     '#tree' => TRUE,
      );
-    $form['pidlists'][$key] = $titlefield; 
+    $form[$key] = $titlefield; 
      
+    $pidlistobj = array(
+    '#type' => 'value',
+    '#value' => $value,
+    );
+  
+  $form[$key]['plo'] = $pidlistobj;
+    
     $userfield = array( 
      '#type' => 'fieldset',
      '#collapsible' => TRUE,
      '#collapsed'=> FALSE,
      '#title' => t('Users'),
     );
-    $form['pidlists'][$key]['users'] = $userfield;
+    $form[$key]['users'] = $userfield;
      
     foreach ($value->userlist as $itr => $piduser) {
       $tempuser = user_load($piduser);
       $tempuser = $tempuser->name;
-      $form['pidlists'][$key]['users'][$itr] = array(
+      $form[$key]['users'][$itr] = array(
         '#type' => 'item',
-        '#value' => $tempuser
+        '#value' => $tempuser,
         );
     }
   
@@ -40,34 +59,50 @@ function islandora_pid_list_form(array &$form_state) {
      '#collapsed'=> FALSE,
      '#title' => t('Pids'),
     );
-    $form['pidlists'][$key]['pids'] = $pidfield;
+    $form[$key]['pids'] = $pidfield;
     
-    foreach ($value->pidlist as $itr=> $pid) {
-     $form['pidlists'][$key]['pids'][$itr] = array (
-       '#prefix' => '<div class=pid'.$itr.'>',
+    foreach ($value->pidlist as $itr => $pid) {
+     $form[$key]['pids'][$itr] = array (
+       '#prefix' => '<div class="pid'.$itr.'">',
        '#suffix' => '</div>',
-       '#value' => $pid
+       '#value' => $pid,
      );
     }
    
-    $form['pidlists'][$key]['pids']['addpid'] = array (
+    $form[$key]['pids']['pidtext'] = array (
+      '#name' => 'textfield for pidlist ' . $key,
       '#type' => 'textfield',
       '#title' => t('PID'),
-      '#size' => 30
+      '#size' => 30,
     );
     
-    $form['pidlists'][$key]['pids']['addpidsubmit'] = array (
+    $form[$key]['pids']['addpidsubmit'] = array (
+     '#name' => 'submit for pidlist ' . $key,
      '#type' => 'submit',
      '#value' => t('Add pid to list'),
-     '#submit' => array('islandora_pid_list_form_add_pid_submit')
-      );
- }
- dpm($form_state, "before submit");
- return $form;
+     '#submit' => array('islandora_pid_list_form_submit'), 
+    );
+       
+    return $form;
+    
 }
 
-function islandora_pid_list_form_add_pid_submit(array $form, array &$form_state) {
-  //$pid = $form_state['clicked_button']['#pid'];
-  //echo $pid;
-  dsm($form_state, "form state");
+
+function islandora_pid_list_form_submit(array $form, array &$form_state) {
+  dpm($form, 'form');
+  dpm(&$form_state, 'form state');
+  dpm($_POST, 'post');
+ }
+
+function islandora_pid_list_view() {
+  global $user;
+  module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
+  $pidlisthelper = new Islandora_Pid_List_Helper();
+  $pidlist = $pidlisthelper->get_user_pid_list($user->uid);
+  
+  
+  foreach ($pidlist as $key => $value) {
+    $output .= drupal_get_form('islandora_pid_list_form_'.$key, array($value,$key));
+  }
+   return $output;
 }
