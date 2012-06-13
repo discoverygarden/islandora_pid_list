@@ -1,0 +1,9 @@
+div.users div.form-item {
+    width: 250px;
+    display: inline-block;
+}
+
+div.pids div.form-item {
+    width: 250px;
+    display: inline-block;
+}

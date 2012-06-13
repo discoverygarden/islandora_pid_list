@@ -1,8 +1,8 @@
 <?php
 
 class PidList {
-public $userlist;
-public $pidlist;
+public $userlist = array();
+public $pidlist = array();
 public $listname;  
 public $listid; 
 public $listowner;
@@ -63,32 +63,39 @@ public function remove_users($users) {
   if (!$this->session) {
     foreach ($users as $value) {
       $this->remove_user_db($value);
-      }
     }
+  }
   else {
     $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
      
     foreach ($superserial->userlist as $key => $value) {
-     if (in_array($value,$users)) {
-      unset($superserial->userlist[$key]);
-      $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
-     }
+      if (in_array($value,$users)) {
+        unset($superserial->userlist[$key]);
+        $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
+      }
     }
   }
 }
 
 public function add_pids($pids) {
+  module_load_include('inc', 'fedora_repository', 'api/tuque');
+  
   foreach ($pids as $key => $value) {
-    if (!in_array($value,$this->pidlist)) {
-      array_push($this->pidlist, $value);
+    if (islandora_object_load($value)) {
+        if (!in_array($value,$this->pidlist)) {
+        array_push($this->pidlist, $value);
     
-      if (!$this->session) {
-        $this->add_pid_db($value);
-      }
-      else {
+          if (!$this->session) {
+          $this->add_pid_db($value);
+          }
+          else {
           $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
           $superserial->pidlist[] = $value;     
-      }
+          }
+        }
+    }
+    else {
+      throw new Exception(t("Could not add the pid '" . $value ."' to '". $this->listname . "' as the pid doesn't exist!"));
     }
   }  
 }
@@ -105,11 +112,10 @@ public function add_users($users) {
           $superserial->userlist[] = $value;     
        }
      }
-   }
+  }
 }
 
 public function create_list() {
-  dsm("Create list called");
   $this->listowner = $this->useruid;
   
   if (!$this->session) {
@@ -159,16 +165,12 @@ private function add_user_db($useradd) {
   db_query("INSERT INTO {islandora_pid_list_lists} (uid, listid) VALUES (%d,%d)", $useradd, $this->listid);
 }
 
-private function remove_pid_db($pids) {
-  foreach ($pids as $key => $value) {
-    db_query("DELETE FROM {islandora_pid_list_pids} WHERE pidid = '%s'", $value);
-  }
+private function remove_pid_db($pid) {
+  db_query("DELETE FROM {islandora_pid_list_pids} WHERE pidid = '%s' AND listid = %d", $pid, $this->listid);
 }
 
-private function add_pid_db($pids) {
-  foreach ($pids as $key => $value) {
-    db_query("INSERT INTO {islandora_pid_list_pids} (listid, pidid) VALUES (%d, '%s')", $this->listid, $value);
-  }
+private function add_pid_db($pid) {
+  db_query("INSERT INTO {islandora_pid_list_pids} (listid, pidid) VALUES (%d, '%s')", $this->listid, $pid);
 }
 
 public function change_list_name($name) {
@@ -188,7 +190,8 @@ public function set_session($param) {
   {
     $this->session = $param;
   }
-}
+ }
+
 
 }
 
