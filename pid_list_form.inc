@@ -151,20 +151,6 @@ function islandora_pid_list_form_submit(array $form, array &$form_state) {
     else {
       $listobj->remove_users(array($parents['user']));
     }
-  
-  /*if ($form_state['clicked_button']['#array_parents'][0] !== 'submit') {
-    dpm($form_state, 'form ');
-    $listindex = $form_state['clicked_button']['#array_parents'][0];
-    
-    $removeindex = $form_state['clicked_button']['#array_parents'][2];
-    
-    if ($form_state['clicked_button']['#array_parents'][1] === 'pids') {
-      $listobj->remove_pids(array($listobj->pidlist[$removeindex]));
-    }
-    else {
-      $listobj->remove_users(array($listobj->userlist[$removeindex]));
-    }
-  }*/
   }
   else {
   // Add user input to lists
