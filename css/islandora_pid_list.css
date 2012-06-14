@@ -7,3 +7,8 @@ div.pids div.form-item {
     width: 250px;
     display: inline-block;
 }
+
+div.listdetails div.form-item {
+    width: 255px;
+    display: inline-block;
+}

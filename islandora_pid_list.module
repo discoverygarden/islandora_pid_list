@@ -19,13 +19,31 @@ function islandora_pid_list_menu() {
 $items['pidlist'] = array (
   'title' => 'Islandora Pid List',
   'description' => "Track and manage list of pids",
+  'type' => MENU_NORMAL_ITEM,
   'page callback' => 'drupal_get_form',
-  'page arguments' => array('islandora_pid_list_form'),
+  'page arguments' => array('islandora_pid_list_list_form'),
   'access arguments' => array('access content'),
   'file' => 'pid_list_form.inc',
-  'type' => MENU_NORMAL_ITEM,
+);
+
+$items['pidlist/lists'] = array (
+  'title' => 'Lists',
+  'type' => MENU_DEFAULT_LOCAL_TASK,
+  'page callback' => 'drupal_get_form',
+  'page arguments' => array('islandora_pid_list_list_form'),
+  'access arguments' => array('access content'),
+  'file' => 'pid_list_form.inc'
+);
+
+$items['pidlist/add'] = array (
+  'title' => 'Add',
+  'type' => MENU_LOCAL_TASK,
+  'page callback' => 'drupal_get_form',
+  'page arguments' => array('islandora_pid_list_add_form'),
+  'access arguments' => array('access content'),
+  'file' => 'pid_list_form.inc'
   );
-    return $items;
+return $items;
 }
 
 

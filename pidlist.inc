@@ -122,6 +122,7 @@ public function create_list() {
    db_query("INSERT INTO {islandora_pid_list_names} (listname, listowner) VALUES ('%s',%d)", $this->listname, $this->useruid);
    $this->listid = db_last_insert_id('{islandora_pid_list_names}', 'listid');
    
+   dpm($this->userlist, 'userlist');
      foreach ($this->userlist as $key => $value) {
        db_query("INSERT INTO {islandora_pid_list_lists} (uid, listid) VALUES (%d,%d)", $value, $this->listid);
      }
@@ -151,9 +152,7 @@ public function remove_list() {
       }
     }
   else {
-   dsm($_SESSION['islandora_pid_list'], 'before unset');
    unset($_SESSION['islandora_pid_list'][$this->listid]);
-   dsm($_SESSION['islandora_pid_list'], "after unset");
   } 
 }
   
