@@ -12,11 +12,11 @@ public $session = FALSE;
 public function __construct($params = array()) {
   $this->userlist = $params['listusers'];
   $this->useruid = $params['useruid'];  
-  
-  if ($this->useruid == 0) {
-  $this->session = TRUE;
+  if (!empty($params['session']))
+  {
+    $this->session = $params['session'];
   }
-  
+    
   if (!empty($params['listpids'])) {
     $this->pidlist = $params['listpids'];
   }
@@ -91,6 +91,7 @@ public function add_pids($pids) {
           else {
           $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
           $superserial->pidlist[] = $value;     
+          $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
           }
         }
     }
@@ -101,15 +102,16 @@ public function add_pids($pids) {
 }
 public function add_users($users) {
   foreach ($users as $key => $value) {
-      if (!in_array($value,$this->userlist)) {
-        array_push($this->userlist, $value);
+    if (!in_array($value,$this->userlist)) {
+      array_push($this->userlist, $value);
     
         if (!$this->session) {
           $this->add_user_db($value);
         }
         else {
           $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
-          $superserial->userlist[] = $value;     
+          $superserial->userlist[] = $value;  
+          $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
        }
      }
   }
@@ -122,7 +124,6 @@ public function create_list() {
    db_query("INSERT INTO {islandora_pid_list_names} (listname, listowner) VALUES ('%s',%d)", $this->listname, $this->useruid);
    $this->listid = db_last_insert_id('{islandora_pid_list_names}', 'listid');
    
-   dpm($this->userlist, 'userlist');
      foreach ($this->userlist as $key => $value) {
        db_query("INSERT INTO {islandora_pid_list_lists} (uid, listid) VALUES (%d,%d)", $value, $this->listid);
      }

@@ -1,23 +1,21 @@
 <?php
 function get_user_pid_list($uid) {
     module_load_include('inc', 'islandora_pid_list', 'pidlist');
-    
-    // If user is not an anon
-    if ($uid != 0) {
-      $listids = array();
-      $pidlist = array();
-    
-      $result = db_query('SELECT listid FROM {islandora_pid_list_lists} WHERE uid = %d', $uid);
-    
-      while ($listid = db_fetch_array($result)) {
-        array_push($listids, $listid['listid']);
-      }
    
-      foreach ($listids as $key => $value) {
-        $listpids = array();
-        $listusers = array();
+    $listids = array();
+    $pidlist = array();
     
-        $result = db_query('SELECT pidid from {islandora_pid_list_pids} WHERE listid = %d', $value);
+    $result = db_query('SELECT listid FROM {islandora_pid_list_lists} WHERE uid = %d ORDER BY listid', $uid);
+    
+    while ($listid = db_fetch_array($result)) {
+      array_push($listids, $listid['listid']);
+    }
+   
+    foreach ($listids as $key => $value) {
+      $listpids = array();
+      $listusers = array();
+    
+      $result = db_query('SELECT pidid from {islandora_pid_list_pids} WHERE listid = %d', $value);
 
         while ($pid = db_fetch_array($result)) {
           array_push($listpids, $pid['pidid']);
@@ -47,16 +45,18 @@ function get_user_pid_list($uid) {
 
         $pidlist[] = $templist;
       }
-      return $pidlist;
-    }
-    // User is anon, use session
-    else {
-      $pidlist = array();
-        if (!empty($_SESSION['islandora_pid_list'])) {
+         
+    // User is anon, use session as well
+    if ($user->uid == 0) {
+       if (!empty($_SESSION['islandora_pid_list'])) {
           foreach($_SESSION['islandora_pid_list'] as $value) {
             $pidlist[] = unserialize($value);
           }
         }
-    return $pidlist;
     }
+    return $pidlist;
+}
+
+function get_pid_list_pid($pid) {
+  
 }

@@ -1,12 +1,27 @@
 <?php
+/**
+* Implementation of hook_perm().
+*/
+
+function islandora_pid_list_perm() {
+  return array(t("Manage other users' pidlists"));
+}
+
+
+
 // In D7 this is changed to hook_user_login()
 function islandora_pid_list_user($op, &$edit, &$account, $category = NULL) {
+  global $user;
   module_load_include('inc', 'islandora_pid_list', 'pidlist');
   if ($op == 'login') {
     if (!empty($_SESSION['islandora_pid_list'])) {
        foreach($_SESSION['islandora_pid_list'] as $key => $value)
        {
         $pidlistsession = unserialize($value);
+        $anonindex = array_search(0,$pidlistsession->userlist,TRUE);
+        // Replace the anon who's logged in with their associated user uid
+        $pidlistsession->useruid = $user->uid;
+        $pidlistsession->userlist[$anonindex] = $user->uid;
         $pidlistsession->set_session(FALSE);
         $pidlistsession->create_list();
         unset($_SESSION['islandora_pid_list'][$key]);
@@ -22,7 +37,7 @@ $items['pidlist'] = array (
   'type' => MENU_NORMAL_ITEM,
   'page callback' => 'drupal_get_form',
   'page arguments' => array('islandora_pid_list_list_form'),
-  'access arguments' => array('access content'),
+  'access arguments' => array('access content'),   
   'file' => 'pid_list_form.inc',
 );
 
@@ -32,7 +47,7 @@ $items['pidlist/lists'] = array (
   'page callback' => 'drupal_get_form',
   'page arguments' => array('islandora_pid_list_list_form'),
   'access arguments' => array('access content'),
-  'file' => 'pid_list_form.inc'
+  'file' => 'pid_list_form.inc',
 );
 
 $items['pidlist/add'] = array (
@@ -41,10 +56,32 @@ $items['pidlist/add'] = array (
   'page callback' => 'drupal_get_form',
   'page arguments' => array('islandora_pid_list_add_form'),
   'access arguments' => array('access content'),
-  'file' => 'pid_list_form.inc'
+  'file' => 'pid_list_form.inc',
   );
+
 return $items;
 }
+
+function islandora_pid_list_islandora_tabs($content_models, $pid) {
+ module_load_include('inc', 'islandora_pid_list', 'pid_list_form');
+ $tabs = array();
+   
+ if (variable_get('islandora_pid_list_show_tabs', TRUE)) {
+  
+   // D7 uses MENU_LOCAL_TASKS
+  $tabs['islandora_pid_list'] = array (
+    '#type' => 'tabpage',
+    '#title' => 'Lists',
+    '#content' => drupal_get_form('islandora_pid_list_pid_form', $pid),
+  );
+  dsm($pid, 'pid in tab');
+  dsm($tabs, 'tabs');
+  return $tabs;
+  }
+  
+}
+
+
 
 
 
