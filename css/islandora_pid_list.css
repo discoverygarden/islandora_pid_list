@@ -12,3 +12,8 @@ div.listdetails div.form-item {
     width: 255px;
     display: inline-block;
 }
+
+div.userlists div.form-item {
+    width: 255px;
+    display: inline-block;
+}

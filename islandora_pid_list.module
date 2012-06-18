@@ -4,7 +4,7 @@
 */
 
 function islandora_pid_list_perm() {
-  return array(t("Manage other users' pidlists"));
+  return array(t("Manage other users' pidlists"), t("Adminisiter islandora_pid_list module"));
 }
 
 
@@ -59,6 +59,15 @@ $items['pidlist/add'] = array (
   'file' => 'pid_list_form.inc',
   );
 
+$items['admin/settings/islandora_pid_list'] = array(
+    'title' => 'Islandora Pid List',
+    'description' => 'Settings for the Islandora Pid List module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_pid_list_settings'),
+    'access arguments' => array(t('Adminisiter islandora_pid_list module')),
+    'file' => 'pid_list_form.inc'
+  );
+
 return $items;
 }
 
@@ -74,8 +83,7 @@ function islandora_pid_list_islandora_tabs($content_models, $pid) {
     '#title' => 'Lists',
     '#content' => drupal_get_form('islandora_pid_list_pid_form', $pid),
   );
-  dsm($pid, 'pid in tab');
-  dsm($tabs, 'tabs');
+  
   return $tabs;
   }
   

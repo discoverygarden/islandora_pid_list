@@ -1,4 +1,14 @@
 <?php
+function islandora_pid_list_settings() {
+  $form = array();
+  $form['islandora_pid_list_show_tabs'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show Pid List Tabs'),
+    '#description' => t("Show a tab for the PID lists associated to each object on each Fedora object's page."),
+    '#default_value' => variable_get('islandora_pid_list_show_tabs', TRUE),
+  );
+  return system_settings_form($form);
+}
 
 function islandora_pid_list_list_form($form_state) {
   global $user;
@@ -20,15 +30,13 @@ function islandora_pid_list_list_form($form_state) {
     $options[$result->uid]= $result->uid . ': ' . $resultname;
   }
   
-  $pidlist = get_user_pid_list($user->uid);
-  
+  $pidlist = get_user_pid_list(array('user' => $user->uid));
   $form = array(
     '#tree' => TRUE,
   );
   
   if (!empty($pidlist)) {
     foreach ($pidlist as $key => $value) {
-
       $form[$key] = array( 
         '#type' => 'fieldset',
         '#collapsible' => TRUE,
@@ -78,7 +86,6 @@ function islandora_pid_list_list_form($form_state) {
         }
         foreach ($value->userlist as $itr => $piduser) {
           $tempuser = user_load($piduser);
-
           if ($tempuser->uid == $user->uid && $user->uid != 0)
           {
             $tempuser = t('Yourself');
@@ -109,6 +116,10 @@ function islandora_pid_list_list_form($form_state) {
               '#type' => 'image_button',
               '#src' => drupal_get_path('module', 'fedora_repository') . '/images/purge_big.png',
             ),
+            'plo' => array(
+              '#type' => 'value',
+              '#value' => $value,
+            )
           );    
       }
       $fku['listusers'] = array (
@@ -116,6 +127,7 @@ function islandora_pid_list_list_form($form_state) {
         '#default value' => t('Select a user to add'),
         '#title' => t('Add a user to the list'),
         '#options' => $options,
+        '#width' => 20,
       );
     }
      
@@ -151,9 +163,13 @@ function islandora_pid_list_list_form($form_state) {
             '#value' => $pid,
           ),
           'list-id' => array(
-              '#type' => 'value',
-              '#value' => $key,
+            '#type' => 'value',
+            '#value' => $key,
           ),
+          'plo' => array(
+            '#type' => 'value',
+            '#value' => $value,
+          )
         );
         if (user_access(t("Manage other users' pidlists")) || $user->uid == $value->listowner) {
           $fkp[$itr]['remove'] = array (
@@ -178,7 +194,7 @@ function islandora_pid_list_list_form($form_state) {
       );
      } 
   }
- } 
+ }
  else {
    $form['empty'] = array (
      '#type' => 'item',
@@ -204,7 +220,7 @@ function islandora_pid_list_list_form_submit(array $form, array &$form_state) {
   
   if ($topparent !== 'submit' && $topparent !== 'forget') {
     $parents = islandora_pid_list_list_form_get_parents($form_state);
-    $listobj = $form_state['values'][$parents['list-id']]['plo'];
+    $listobj = $parents['plo'];
    
     if(array_key_exists('pid',$parents)) {
       $listobj->remove_pids(array($parents['pid']));
@@ -228,19 +244,20 @@ function islandora_pid_list_list_form_submit(array $form, array &$form_state) {
       if (is_array($key)) {
         $object = $key['plo'];
         $userinput = array();
+       if (user_access(t("Manage other users' pidlists")) || $user->uid == $object->listowner) {
+         if ($object->listname != $key['listname']) {
+            if (ctype_space($key['listname']) || $key['listname'] == '') {
+              drupal_set_message(t('The list %listname must have a name!',
+                  array (
+                  '%listname' => $object->listname,  
+                  )
+            ),'error');
+            }
+            else {
+              $object->change_list_name($key['listname']);
+            }
+          }
         
-        if ($object->listname != $key['listname']) {
-          if (ctype_space($key['listname']) || $key['listname'] == '') {
-            drupal_set_message(t('The list %listname must have a name!',
-                array (
-                '%listname' => $object->listname,  
-                )
-           ),'error');
-          }
-          else {
-            $object->change_list_name($key['listname']);
-          }
-        }
         if (strlen($key['users']['listusers'])) {
           $userinput[] = $key['users']['listusers'];
         }
@@ -285,6 +302,7 @@ function islandora_pid_list_list_form_submit(array $form, array &$form_state) {
         }
       }
      }
+    }
     }
   }
 }
@@ -346,89 +364,243 @@ function islandora_pid_list_add_form($form_state) {
 }
 
 function islandora_pid_list_add_form_submit(array $form, array &$form_state) {
- global $user;
- module_load_include('inc', 'islandora_pid_list', 'pidlist');
- $createname = $form_state['values']['listname'];
- $createpid = $form_state['values']['pidtext'];
- $createuser = $form_state['values']['listusers'];
-      
- // Create a new list
- if (!ctype_space($createname) && $createname != '') {
-  $paramusers = array();
-  $parampids = array();
-  
-  $params = array(
-    'retrieve' => FALSE,
-    'useruid' => $user->uid,
-    'listowner' => $user->uid,
-    'listname' => $createname,
-    'listusers' => array($user->uid),
-  );
-  
-  if ($user->uid == 0)
-  {
-    $params['session'] = TRUE;
-  }
-  
-  $templist = new PidList($params);
-  
-  if (!empty($createuser) && $createuser != $user->uid) {
-    $paramusers[] = $createuser;
-    $templist->add_users($paramusers);
-  }
-  
-  if (!empty($createpid)) {
-    try {
-        $templist->add_pids(array($createpid));
-        } 
-    catch (Exception $e) {
-      drupal_set_message($e->getMessage() . ' The list was still created!','error');
-    }
-  }
-  drupal_set_message(t('The new list %listname was created. Note that lists created when not logged will not be saved.', 
-      array(
-        '%listname' =>$createname)
-      ));
- }
- else {
-  drupal_set_message(t('A new list must at least have a name!'), 'error');
- }
-}
-
-function islandora_pid_list_pid_form($form_state, $pid) {
-  module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
-  module_load_include('inc', 'islandora_pid_list', 'pidlist');
-  
-  $lists = array();
-  $lists = get_pid_list_pid($pid);
-  
-  dsm($pid, 'pid');
   global $user;
-  
-  $form = array (
-    '#title' => t('Add'),
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
+  $createname = $form_state['values']['listname'];
+  $createpid = $form_state['values']['pidtext'];
+  $createuser = $form_state['values']['listusers'];
+
+  // Create a new list
+  if (!ctype_space($createname) && $createname != '') {
+    $paramusers = array();
+    $parampids = array();
+
+    $params = array(
+      'retrieve' => FALSE,
+      'useruid' => $user->uid,
+      'listowner' => $user->uid,
+      'listname' => $createname,
+      'listusers' => array($user->uid),
+    );
+
+    if ($user->uid == 0)
+    {
+      $params['session'] = TRUE;
+    }
+
+    $templist = new PidList($params);
+
+    if (!empty($createuser) && $createuser != $user->uid) {
+      $paramusers[] = $createuser;
+      $templist->add_users($paramusers);
+    }
+
+    if (!empty($createpid)) {
+      try {
+          $templist->add_pids(array($createpid));
+          } 
+      catch (Exception $e) {
+        drupal_set_message($e->getMessage() . ' The list was still created!','error');
+      }
+    }
+    drupal_set_message(t('The new list %listname was created. Note that lists created when not logged will not be saved.', 
+        array(
+          '%listname' =>$createname)
+        ));
+  }
+  else {
+    drupal_set_message(t('A new list must at least have a name!'), 'error');
+  }
+  }
+
+  function islandora_pid_list_pid_form($form_state, $pid) {
+    global $user;
+
+    module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
+    module_load_include('inc', 'islandora_pid_list', 'pidlist');
+    drupal_add_css(drupal_get_path('module', 'islandora_pid_list') . '/css/islandora_pid_list.css');
+
+    $pidlist = array();
+    $pidlist = get_user_pid_list(array('pid' => $pid));
+    
+
+    $form = array (
+      '#title' => t('Lists'),
       '#tree' => TRUE,
-      'lists' => array(
+      'userlists' => array(
         '#type' => 'fieldset',
-        '#title' => t('Lists'),
-     )
-  );
+        '#title' => t('My Lists'),
+        '#collapsible' => TRUE,
+        '#collapsed'=> FALSE,
+      ),
+      'pid' => array(
+        '#type' => 'value',
+        '#value' => $pid,
+      ), 
+    );
+
+    $listids = array();
+    $selectlist = array();
+
+    // $form['userlists'] = user associated lists (ie lists the user can see).
+    foreach ($pidlist as $key => $value) {
+      if (in_array($user->uid, $value->userlist)) {
+
+        $form['userlists'][$key]['label'] = array( 
+            '#type' => 'item',
+            '#title' => $value->listname . ' [ID:' . $value->listid . ']',  
+            '#prefix' => '<div class="userlists">',
+        );
+
+        $form['userlists'][$key]['remove'] = array (
+          '#type' => 'image_button',
+          '#src' => drupal_get_path('module', 'fedora_repository') . '/images/purge_big.png', 
+          '#suffix' => '</div>',
+        );
+
+        $form['userlists'][$key]['list-id'] = array(
+          '#type' => 'value',
+          '#value' => $key
+        );  
+
+        $form['userlists'][$key]['listtype'] = array(
+          '#type' => 'value',
+          '#value' => 'userlists',
+        );
+
+        $form['userlists'][$key]['plo'] = array(
+        '#type' => 'value',
+        '#value' => $value,
+        );
+        array_push($listids, $value->listid);
+      }
+    }
+    if (empty($pidlist)) {
+       $form['userlists']['empty'] = array(
+        '#value' => t('No lists currently associated'),
+        '#prefix' => '<div class="emptypid">',
+        '#suffix' => '</div>',
+       );  
+     } 
+
+    $result = db_query('SELECT listid FROM {islandora_pid_list_lists} WHERE uid = %d ORDER BY listid', $user->uid);
+
+    while ($listid = db_fetch_array($result)) {
+      if (!in_array($listid['listid'],$listids)) {
+        array_push($selectlist, $listid['listid']);
+      }
+    }
         
-  $form['submit'] = array (
-      '#type' => 'submit',
-      '#name' => 'islandora_pid_list_pid_form_submit_button',
-      '#value' => t('Submit'),
-  );
-  $form['forget'] = array (
-      '#type' => 'submit',
-      '#name' => 'islandora_pid_list_pid_form_forget_button',
-      '#value' => t('Forget'),
-  );
- return $form;
+    $options = array("" => "- Select A List To Add - ");
+
+    foreach ($selectlist as $value) {
+      $query = db_query('SELECT listname FROM {islandora_pid_list_names} WHERE listid = %d', $value);
+      $result = db_fetch_array($query);
+      $options[$value] = $value. ': ' . $result['listname'];
+    }
+
+    $form['userlists']['listoptions'] = array (
+          '#type' => 'select',
+          '#default value' => t('Select a list to add the object to'),
+          '#options' => $options,
+          '#prefix' => '<div class="addlist">',
+          '#suffix' => '</div>',
+        );
+
+    if (user_access(t('Adminisiter islandora_pid_list module'))) {
+      
+      
+           
+      $form['alllists'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('All Other Lists associated to this PID'),
+        '#collapsible' => TRUE,
+        '#collapsed'=> FALSE,
+      );
+     foreach ($pidlist as $key => $value) {
+      if (!in_array($user->uid, $value->userlist)) {
+
+        $form['alllists'][$key]['label'] = array( 
+          '#type' => 'item',
+          '#title' => $value->listname . ' [ID:' . $value->listid . ']',  
+          '#prefix' => '<div class="userlists">',
+        );
+        $form['alllists'][$key]['remove'] = array (
+          '#type' => 'image_button',
+          '#src' => drupal_get_path('module', 'fedora_repository') . '/images/purge_big.png', 
+          '#suffix' => '</div>',
+        );
+
+        $form['alllists'][$key]['list-id'] = array(
+          '#type' => 'value',
+          '#value' => $key
+        );  
+
+        $form['alllists'][$key]['plo'] = array(
+          '#type' => 'value',
+          '#value' => $value,
+          );
+       }
+      }
+     if (empty($pidlist)) {
+       $form['alllists']['empty'] = array(
+        '#value' => t('No lists currently associated'),
+        '#prefix' => '<div class="emptypid">',
+        '#suffix' => '</div>',
+       );  
+     } 
+   }
+
+    $form['submit'] = array (
+        '#type' => 'submit',
+        '#name' => 'islandora_pid_list_pid_form_submit_button',
+        '#value' => t('Submit'),
+    );
+    $form['forget'] = array (
+        '#type' => 'submit',
+        '#name' => 'islandora_pid_list_pid_form_forget_button',
+        '#value' => t('Forget'),
+    );
+  return $form;
 }
 
 function islandora_pid_list_pid_form_submit(array $form, array &$form_state) {
- global $user;
- module_load_include('inc', 'islandora_pid_list', 'pidlist');
-
+  global $user;
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
+  dsm($form_state['values'], 'FSV');
+  dsm($form_state['clicked_button'], 'CLICKED BUTTON');
+  
+  $parents = islandora_pid_list_list_form_get_parents($form_state);
+  $tempparents = $form_state['clicked_button']['#parents'];
+  $topparent = array_pop($tempparents);
+    
+  if ($topparent !== 'submit' && $topparent !== 'forget') {
+    dsm('not submit or forget');
+    $parents = islandora_pid_list_list_form_get_parents($form_state);
+    $listobj = $parents['plo'];
+    $listobj->remove_pids(array($form_state['values']['pid']));
+  }
+  elseif ($topparent === 'submit') {
+  // Add user input to lists
+    foreach($form_state['values'] as $key) {
+      if (is_array($key)) {
+        foreach($key as $value) {
+          if (is_array($value)) {
+            $object = $value['plo'];
+            break;
+          }
+        }
+      }
+    }  
+        $listid = $form_state['values']['userlists']['listoptions'];
+               
+        $params = array(
+          'listid' => $listid,
+          'retrieve' => TRUE,
+        );
+        
+        $test = new PidList($params);
+        dsm($test, 'test');
+     
+  }
 }
