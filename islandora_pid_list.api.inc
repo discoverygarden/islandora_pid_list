@@ -1,7 +1,7 @@
 <?php
 function get_user_pid_list($params = array()) {
   global $user;
-    module_load_include('inc', 'islandora_pid_list', 'pidlist');
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
   
   $listids = array();
   $pidlist = array();
@@ -40,8 +40,8 @@ function get_user_pid_list($params = array()) {
     
       $result = db_query('SELECT pidid FROM {islandora_pid_list_pids} WHERE listid = %d', $value);
 
-        while ($pid = db_fetch_array($result)) {
-          array_push($listpids, $pid['pidid']);
+        while ($pids = db_fetch_array($result)) {
+          array_push($listpids, $pids['pidid']);
         }
              
         $listuser = db_query('SELECT uid FROM {islandora_pid_list_lists} WHERE listid = %d', $value);
@@ -70,12 +70,43 @@ function get_user_pid_list($params = array()) {
       }
          
     // User is anon, use session as well
-    if ($user->uid == 0) {
-       if (!empty($_SESSION['islandora_pid_list'])) {
-          foreach($_SESSION['islandora_pid_list'] as $value) {
-            $pidlist[] = unserialize($value);
-          }
+    if ($user->uid == 0 && !empty($_SESSION['islandora_pid_list'])) {
+      foreach($_SESSION['islandora_pid_list'] as $value) {
+        if (isset($pid)) {
+          $templist = unserialize($value);
+            if (in_array($pid,$templist->pidlist)) {
+              $pidlist[] = $templist;
+            }
         }
+        else {
+          $pidlist[] = unserialize($value);
+        }
+      }
     }
     return $pidlist;
+}
+
+function get_pid_list_by_number($listid) {
+  global $user;
+  dsm($_SESSION['islandora_pid_list'],'session');
+  dsm($listid, 'listid');
+  
+  if (!preg_match('/session_/', $listid)) {
+    
+    module_load_include('inc', 'islandora_pid_list', 'pidlist');
+    $listresult = db_query('SELECT listname, listowner from {islandora_pid_list_names} WHERE listid = %d', $listid);
+
+    $params = array(
+      'retrieve' => TRUE,
+      'useruid' => $uid,
+      'listowner' => $listresult['listowner'],
+      'listname' => $listresult['listname'],
+      'listid' => $listid,
+    );
+    $templist = new PidList($params);
+  }
+  else {
+    $templist = unserialize($_SESSION['islandora_pid_list'][$listid]);
+  }
+  return $templist;
 }

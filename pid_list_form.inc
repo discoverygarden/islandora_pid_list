@@ -37,11 +37,12 @@ function islandora_pid_list_list_form($form_state) {
   
   if (!empty($pidlist)) {
     foreach ($pidlist as $key => $value) {
+      $idoutput = str_replace('session_', '', $value->listid);
       $form[$key] = array( 
         '#type' => 'fieldset',
         '#collapsible' => TRUE,
         '#collapsed'=> TRUE,
-        '#title' => $value->listname . ' [ID:' . $value->listid . ']',        
+        '#title' => $value->listname . ' [ID:' . $idoutput . ']',        
       );
         if (user_access(t("Manage other users' pidlists")) || $user->uid == $value->listowner) {
           $form[$key]['listname'] = array (
@@ -319,6 +320,12 @@ function islandora_pid_list_list_form_get_parents($form_state) {
 
 function islandora_pid_list_add_form($form_state) {
   global $user;
+  
+  $redirectpid = request_uri();
+  dsm($redirectpid, 'redirect');
+  $redirectpid = explode("?",$redirectpid);
+  $redirectpid = $redirectpid[1];
+  
   $options = array("" => "- Select A User To Add - ");
   $query = db_query("SELECT uid, name FROM {users} WHERE uid != %d ORDER BY uid", $user->uid);
   while ($result = db_fetch_object($query)) {
@@ -344,11 +351,21 @@ function islandora_pid_list_add_form($form_state) {
         '#options' => $options,
       ),
       'pidtext' => array (
-      '#type' => 'textfield',
-      '#title' => t('Add a PID'),
-      '#size' => 20,
-     ),
+        '#type' => 'textfield',
+        '#title' => t('Add a PID'),
+        '#size' => 20,
+      ),
     );
+  
+   
+  if (!empty($redirectpid)) {
+    $form['redirect'] = array(
+        '#type' => 'value',
+        '#value' => $redirectpid,
+    );
+    
+    $form['pidtext']['#default_value'] = $redirectpid;
+  }
   
   $form['submit'] = array (
       '#type' => 'submit',
@@ -365,11 +382,13 @@ function islandora_pid_list_add_form($form_state) {
 
 function islandora_pid_list_add_form_submit(array $form, array &$form_state) {
   global $user;
+  
   module_load_include('inc', 'islandora_pid_list', 'pidlist');
+   
   $createname = $form_state['values']['listname'];
   $createpid = $form_state['values']['pidtext'];
   $createuser = $form_state['values']['listusers'];
-
+  $redirectpid = $form_state['values']['redirect'];
   // Create a new list
   if (!ctype_space($createname) && $createname != '') {
     $paramusers = array();
@@ -407,11 +426,19 @@ function islandora_pid_list_add_form_submit(array $form, array &$form_state) {
         array(
           '%listname' =>$createname)
         ));
+    if (empty($redirectpid)) {
+      drupal_goto('pidlist');
+    }
+    else {
+      $redirect = 'fedora/repository/' . $redirectpid;
+      drupal_goto($redirect);
+    }
   }
   else {
     drupal_set_message(t('A new list must at least have a name!'), 'error');
+    drupal_goto('pidlist/add?',$redirectpid);
   }
-  }
+ }
 
   function islandora_pid_list_pid_form($form_state, $pid) {
     global $user;
@@ -445,10 +472,10 @@ function islandora_pid_list_add_form_submit(array $form, array &$form_state) {
     // $form['userlists'] = user associated lists (ie lists the user can see).
     foreach ($pidlist as $key => $value) {
       if (in_array($user->uid, $value->userlist)) {
-
+        $idoutput = str_replace('session_', '', $value->listid);
         $form['userlists'][$key]['label'] = array( 
             '#type' => 'item',
-            '#title' => $value->listname . ' [ID:' . $value->listid . ']',  
+            '#title' => $value->listname . ' [ID:' . $idoutput . ']',  
             '#prefix' => '<div class="userlists">',
         );
 
@@ -491,14 +518,25 @@ function islandora_pid_list_add_form_submit(array $form, array &$form_state) {
       }
     }
         
-    $options = array("" => "- Select A List To Add - ");
-
+    $options['default'] = "- Select A List To Add - ";
+    $options['create'] = 'Create a new list';
     foreach ($selectlist as $value) {
       $query = db_query('SELECT listname FROM {islandora_pid_list_names} WHERE listid = %d', $value);
       $result = db_fetch_array($query);
-      $options[$value] = $value. ': ' . $result['listname'];
+      $options[$value] = $value . ': ' . $result['listname'];
     }
-
+    
+    // Grab from session as well if user is anon and exists session objs
+    if ($user->uid == 0 && !empty($_SESSION['islandora_pid_list'])) {
+      foreach($_SESSION['islandora_pid_list'] as $value) {
+        $sessionlist = unserialize($value);
+        $output = str_replace('session_', '', $sessionlist->listid);
+          if (!in_array($sessionlist->listid,$listids)) {
+            $options[$sessionlist->listid] = $output . ': ' . $sessionlist->listname;
+          }
+      }
+    }
+        
     $form['userlists']['listoptions'] = array (
           '#type' => 'select',
           '#default value' => t('Select a list to add the object to'),
@@ -567,40 +605,27 @@ function islandora_pid_list_add_form_submit(array $form, array &$form_state) {
 function islandora_pid_list_pid_form_submit(array $form, array &$form_state) {
   global $user;
   module_load_include('inc', 'islandora_pid_list', 'pidlist');
-  dsm($form_state['values'], 'FSV');
-  dsm($form_state['clicked_button'], 'CLICKED BUTTON');
-  
+    
   $parents = islandora_pid_list_list_form_get_parents($form_state);
   $tempparents = $form_state['clicked_button']['#parents'];
   $topparent = array_pop($tempparents);
-    
+ 
   if ($topparent !== 'submit' && $topparent !== 'forget') {
-    dsm('not submit or forget');
     $parents = islandora_pid_list_list_form_get_parents($form_state);
     $listobj = $parents['plo'];
     $listobj->remove_pids(array($form_state['values']['pid']));
   }
   elseif ($topparent === 'submit') {
-  // Add user input to lists
-    foreach($form_state['values'] as $key) {
-      if (is_array($key)) {
-        foreach($key as $value) {
-          if (is_array($value)) {
-            $object = $value['plo'];
-            break;
-          }
-        }
-      }
-    }  
-        $listid = $form_state['values']['userlists']['listoptions'];
-               
-        $params = array(
-          'listid' => $listid,
-          'retrieve' => TRUE,
-        );
-        
-        $test = new PidList($params);
-        dsm($test, 'test');
+    $listid = $form_state['values']['userlists']['listoptions'];
+    
+    if ($listid != 'default' && $listid != 'create') {
+      $list = get_pid_list_by_number($listid);
+      $list->add_pids(array($form_state['values']['pid']));
+    }
+    elseif ($listid == 'create') {
      
+      
+     drupal_goto('pidlist/add', $form_state['values']['pid']);
+    }
   }
 }

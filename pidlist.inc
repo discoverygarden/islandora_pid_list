@@ -33,7 +33,7 @@ public function __construct($params = array()) {
     $this->create_list();
    }
   else {
-    $this->listowner = $params['listowner'];
+  $this->listowner = $params['listowner'];
   } 
 }  
 
@@ -134,8 +134,9 @@ public function create_list() {
   else {
     // Add to session
     $index = count($_SESSION['islandora_pid_list']);
-    $this->listid = $index;
-    $_SESSION['islandora_pid_list'][$index] = serialize($this);
+    
+    $this->listid = 'session_' . $index;
+    $_SESSION['islandora_pid_list'][$this->listid] = serialize($this);
    }
 }
 
