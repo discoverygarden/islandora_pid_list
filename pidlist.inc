@@ -1,4 +1,5 @@
 <?php
+module_load_include('inc', 'fedora_repository', 'api/tuque');
 
 class PidList {
 public $userlist = array();
@@ -59,7 +60,6 @@ public function remove_pids($pids) {
 
 public function remove_users($users) {
   $this->userlist = array_diff($this->userlist, $users);
-  
   if (!$this->session) {
     foreach ($users as $value) {
       $this->remove_user_db($value);
@@ -78,8 +78,6 @@ public function remove_users($users) {
 }
 
 public function add_pids($pids) {
-  module_load_include('inc', 'fedora_repository', 'api/tuque');
-  
   foreach ($pids as $key => $value) {
     if (islandora_object_load($value)) {
         if (!in_array($value,$this->pidlist)) {
