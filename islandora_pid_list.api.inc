@@ -26,7 +26,11 @@ function get_user_pid_list($params = array()) {
     $result = db_query('SELECT listid FROM {islandora_pid_list_lists} WHERE uid = %d ORDER BY listid', $uid);
   }
   else {
-    $result = db_query('SELECT DISTINCT listid FROM {islandora_pid_list_lists} WHERE uid != %d ORDER BY listid', $user->uid);
+    $result = db_query('SELECT DISTINCT listid FROM {islandora_pid_list_lists} WHERE uid <> %d ORDER BY listid', $user->uid);
+    $orphanresult = db_query('SELECT listid from {islandora_pid_list_names} WHERE listowner IS NULL');
+    while ($orphanid = db_fetch_array($orphanresult)) {
+      array_push($listids, $orphanid['listid']);
+    }
   }
  
   while ($listid = db_fetch_array($result)) {
@@ -70,10 +74,10 @@ function get_user_pid_list($params = array()) {
          
    // User is anon, use session as well
    if ($user->uid == 0 && !empty($_SESSION['islandora_pid_list'])) {
-     foreach($_SESSION['islandora_pid_list'] as $value) {
+     foreach ($_SESSION['islandora_pid_list'] as $value) {
        if (isset($pid)) {
          $templist = unserialize($value);
-           if (in_array($pid,$templist->pidlist)) {
+           if (in_array($pid, $templist->pidlist)) {
              $pidlist[] = $templist;
            }
        }
@@ -86,7 +90,7 @@ function get_user_pid_list($params = array()) {
 }
 
 function get_pid_list_by_number($listid) {
-  dsm($_SESSION['islandora_pid_list'],'session');
+  dsm($_SESSION['islandora_pid_list'], 'session');
   dsm($listid, 'listid');
   
   if (!preg_match('/session_/', $listid)) {

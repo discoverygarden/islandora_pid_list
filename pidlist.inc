@@ -13,8 +13,7 @@ public $session = FALSE;
 public function __construct($params = array()) {
   $this->userlist = $params['listusers'];
   $this->useruid = $params['useruid'];  
-  if (!empty($params['session']))
-  {
+  if (!empty($params['session'])) {
     $this->session = $params['session'];
   }
     
@@ -50,7 +49,7 @@ public function remove_pids($pids) {
     $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
      
     foreach ($superserial->pidlist as $key => $value) {
-      if (in_array($value,$pids)) {
+      if (in_array($value, $pids)) {
         unset($superserial->pidlist[$key]);
         $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
       }
@@ -59,17 +58,23 @@ public function remove_pids($pids) {
 }
 
 public function remove_users($users) {
+  global $user;
+  dsm($users, 'remove');
   $this->userlist = array_diff($this->userlist, $users);
   if (!$this->session) {
     foreach ($users as $value) {
       $this->remove_user_db($value);
+    }
+    if (count($users) == 1) {
+      $this->listowner = "";
+      db_query("UPDATE {islandora_pid_list_names} SET listowner = NULL WHERE listid = %d", $this->listid);
     }
   }
   else {
     $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
      
     foreach ($superserial->userlist as $key => $value) {
-      if (in_array($value,$users)) {
+      if (in_array($value, $users)) {
         unset($superserial->userlist[$key]);
         $_SESSION['islandora_pid_list'][$this->listid] = serialize($superserial);
       }
@@ -80,7 +85,7 @@ public function remove_users($users) {
 public function add_pids($pids) {
   foreach ($pids as $key => $value) {
     if (islandora_object_load($value)) {
-        if (!in_array($value,$this->pidlist)) {
+        if (!in_array($value, $this->pidlist)) {
         array_push($this->pidlist, $value);
     
           if (!$this->session) {
@@ -100,7 +105,7 @@ public function add_pids($pids) {
 }
 public function add_users($users) {
   foreach ($users as $key => $value) {
-    if (!in_array($value,$this->userlist)) {
+    if (!in_array($value, $this->userlist)) {
       array_push($this->userlist, $value);
     
         if (!$this->session) {
@@ -185,8 +190,7 @@ public function change_list_name($name) {
 }
 
 public function set_session($param) {
-  if (is_bool($param))
-  {
+  if (is_bool($param)) {
     $this->session = $param;
   }
  }

@@ -7,18 +7,15 @@ function islandora_pid_list_perm() {
   return array(t("Manage other users' pidlists"), t("Adminisiter islandora_pid_list module"));
 }
 
-
-
 // In D7 this is changed to hook_user_login()
 function islandora_pid_list_user($op, &$edit, &$account, $category = NULL) {
   global $user;
   module_load_include('inc', 'islandora_pid_list', 'pidlist');
   if ($op == 'login') {
     if (!empty($_SESSION['islandora_pid_list'])) {
-       foreach($_SESSION['islandora_pid_list'] as $key => $value)
-       {
+       foreach ($_SESSION['islandora_pid_list'] as $key => $value) {
         $pidlistsession = unserialize($value);
-        $anonindex = array_search(0,$pidlistsession->userlist,TRUE);
+        $anonindex = array_search(0, $pidlistsession->userlist, TRUE);
         // Replace the anon who's logged in with their associated user uid
         $pidlistsession->useruid = $user->uid;
         $pidlistsession->userlist[$anonindex] = $user->uid;
@@ -31,7 +28,7 @@ function islandora_pid_list_user($op, &$edit, &$account, $category = NULL) {
 }
 
 function islandora_pid_list_menu() {
-$items['pidlist'] = array (
+$items['pidlist'] = array(
   'title' => 'Islandora Pid List',
   'description' => "Track and manage list of pids",
   'type' => MENU_NORMAL_ITEM,
@@ -41,7 +38,7 @@ $items['pidlist'] = array (
   'file' => 'pid_list_form.inc',
 );
 
-$items['pidlist/lists'] = array (
+$items['pidlist/lists'] = array(
   'title' => 'Lists',
   'type' => MENU_DEFAULT_LOCAL_TASK,
   'page callback' => 'drupal_get_form',
@@ -50,7 +47,7 @@ $items['pidlist/lists'] = array (
   'file' => 'pid_list_form.inc',
 );
 
-$items['pidlist/add'] = array (
+$items['pidlist/add'] = array(
   'title' => 'Add',
   'type' => MENU_LOCAL_TASK,
   'page callback' => 'drupal_get_form',
@@ -67,7 +64,18 @@ $items['admin/settings/islandora_pid_list'] = array(
     'access arguments' => array(t('Adminisiter islandora_pid_list module')),
     'file' => 'pid_list_form.inc'
   );
-
+$items['pidlist/ahah/add'] = array(
+    'page callback' => 'islandora_pid_list_add_js',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'pid_list_form.inc',
+  );
+$items['pidlist/ahah/remove'] = array(
+    'page callback' => 'islandora_pid_list_remove_js',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'pid_list_form.inc',
+  );
 return $items;
 }
 
@@ -78,7 +86,7 @@ function islandora_pid_list_islandora_tabs($content_models, $pid) {
  if (variable_get('islandora_pid_list_show_tabs', TRUE)) {
   
    // D7 uses MENU_LOCAL_TASKS
-  $tabs['islandora_pid_list'] = array (
+  $tabs['islandora_pid_list'] = array(
     '#type' => 'tabpage',
     '#title' => 'Lists',
     '#content' => drupal_get_form('islandora_pid_list_pid_form', $pid),

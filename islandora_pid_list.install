@@ -60,7 +60,6 @@ function islandora_pid_list_schema() {
         'description' => 'The user ID of who owns the list.',
         'type' => 'int',
         'length' => 11,
-        'not null' => TRUE,
       ),
     ),
     'primary key' => array('listid'),
@@ -85,4 +84,4 @@ function islandora_pid_list_uninstall() {
   drupal_uninstall_schema('islandora_pid_list');
 }
 
-?>
+

@@ -1,0 +1,7 @@
+; $Id$
+name = Islandora Pid List
+description = Allows users to build lists of pids.
+package = Islandora Pid List
+version = 1.x
+core = 6.x
+
