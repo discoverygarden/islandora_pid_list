@@ -65,6 +65,7 @@ function islandora_pid_list_list_form($form_state) {
             '#title' => t('List Name'),
             '#size' => 20,
             '#default_value' => $value->listname,
+            '#value' => $value->listname,
             '#prefix' => '<div class="listdetails">',
           );
           
@@ -135,10 +136,10 @@ function islandora_pid_list_list_form($form_state) {
               '#type' => 'image_button',
               '#src' => drupal_get_path('module', 'islandora_pid_list') . '/images/minus_small.png',
               '#ahah' => array(
-              'event' => 'click',
-              'path' => "pidlist/ahah/remove",
-              'wrapper' => "allpidlists",
-              'method' => 'replace',
+                'event' => 'click',
+                'path' => "pidlist/ahah/remove/user",
+                'wrapper' => "allpidlists",
+                'method' => 'replace',
                 ),
            ),
          );   
@@ -157,6 +158,7 @@ function islandora_pid_list_list_form($form_state) {
         '#title' => t('Add a user to the list'),
         '#options' => $selectoptions,
         '#width' => 20,
+        '#weight' => 10000,
       );
     }
      
@@ -203,7 +205,13 @@ function islandora_pid_list_list_form($form_state) {
         if (user_access("Manage other users' pidlists") || $user->uid == $value->listowner) {
           $fkp[$itr]['remove'] = array(
             '#type' => 'image_button',
-            '#src' => drupal_get_path('module', 'islandora_pid_list') . '/images/minus_small.png',  
+            '#src' => drupal_get_path('module', 'islandora_pid_list') . '/images/minus_small.png',
+            '#ahah' => array(
+                'event' => 'click',
+                'path' => "pidlist/ahah/remove/pid",
+                'wrapper' => "allpidlists",
+                'method' => 'replace',
+                ),
           );
         }
       }
@@ -248,7 +256,7 @@ function islandora_pid_list_list_form($form_state) {
    );
  }
      
- if (user_access(t('Adminisiter islandora_pid_list module'))) {
+ if (user_access('Adminisiter islandora_pid_list module')) {
     $templists = get_user_pid_list(array('all' => TRUE));
     $otherlists = array();
     foreach ($templists as $item) {
@@ -275,6 +283,7 @@ function islandora_pid_list_list_form($form_state) {
         '#title' => t('List Name'),
         '#size' => 20,
         '#default_value' => $value->listname,
+        '#value' => $value->listname,
         '#prefix' => '<div class="listdetails">',
       );
 
@@ -310,8 +319,6 @@ function islandora_pid_list_list_form($form_state) {
           $value->userlist[$uindex] = $fiuser;
         }
         foreach ($value->userlist as $itr => $piduser) {
-          dsm($value, 'value');
-          dsm($piduser, 'piduser');
           if (empty($piduser)) {
             $fku[$itr]['empty'] = array(
               '#type' => 'item',
@@ -345,6 +352,12 @@ function islandora_pid_list_list_form($form_state) {
               'remove' => array(
                 '#type' => 'image_button',
                 '#src' => drupal_get_path('module', 'islandora_pid_list') . '/images/minus_small.png',
+                '#ahah' => array(
+                  'event' => 'click',
+                  'path' => "pidlist/ahah/remove/user",
+                  'wrapper' => "allpidlists",
+                  'method' => 'replace',
+                ),
               ),
               'plo' => array(
                 '#type' => 'value',
@@ -365,6 +378,7 @@ function islandora_pid_list_list_form($form_state) {
           '#title' => t('Add a user to the list'),
           '#options' => $selectoptions,
           '#width' => 20,
+          '#weight' => 10000,
         );
 
 
@@ -411,7 +425,13 @@ function islandora_pid_list_list_form($form_state) {
 
             $fkp[$itr]['remove'] = array(
               '#type' => 'image_button',
-              '#src' => drupal_get_path('module', 'islandora_pid_list') . '/images/minus_small.png',  
+              '#src' => drupal_get_path('module', 'islandora_pid_list') . '/images/minus_small.png',
+              '#ahah' => array(
+                'event' => 'click',
+                'path' => "pidlist/ahah/remove/pid",
+                'wrapper' => "allpidlists",
+                'method' => 'replace',
+                ),
             );
           }
         }
@@ -505,7 +525,7 @@ function islandora_pid_list_list_form_submit(array $form, array &$form_state) {
 
 function islandora_pid_list_save_changes($param, $form_state) {
   global $user;
-  foreach ($form_state['values'][$param] as $key) {
+    foreach ($form_state['values'][$param] as $key) {
     if (is_array($key)) {
       $object = $key['plo'];
       $userinput = array();
@@ -610,6 +630,7 @@ function islandora_pid_list_add_form($form_state) {
         '#default value' => t('Select a user to add'),
         '#title' => t('Add a user to the list'),
         '#options' => $options,
+        '#weight' => 10000,
       ),
       'pidtext' => array(
         '#type' => 'textfield',
@@ -904,10 +925,11 @@ function islandora_pid_list_add_js() {
       break;
       }  
    }
-  } 
+  }
+  $pidindex = 0;
   foreach($form[$param][$listindex]['pids'] as $item => $assoc) {
     if (is_numeric($item)) {
-      $pidindex = $item + 1;
+      $pidindex++;
     }
   }
   $obj = $form[$param][$listindex]['plo']['#value'];
@@ -957,51 +979,46 @@ function islandora_pid_list_add_js() {
           'remove' => array(
                 '#type' => 'image_button',
                 '#src' => drupal_get_path('module', 'islandora_pid_list') . '/images/minus_small.png',
+                '#ahah' => array(
+                  'event' => 'click',
+                  'path' => "pidlist/ahah/remove/pid",
+                  'wrapper' => "allpidlists",
+                  'method' => 'replace',
+                ),
           ),
         );
         $form[$param][$listindex]['pids']['pidtext']['#value'] = '';
-        dsm($form, 'form');
         $form[$param][$listindex]['#collapsed'] = FALSE;
     }
   form_set_cache($form_build_id, $form, $form_state);
-  dsm($form_state, 'form state');
   $form += array('#post' => $_POST, '#programmed' => FALSE);
   $form = form_builder($_POST['form_id'], $form, $form_state);
+  dsm($form[$param], 'ahah check');
+  
+  $javascript = drupal_add_js(NULL, NULL, 'header');
+  $settings = call_user_func_array('array_merge_recursive', $javascript['setting']);
+  unset($settings['ahah']['']);
   drupal_json(array(
-    'status'   => TRUE,
-    'data'     => theme('status_messages') . drupal_render($form),
+      'status' => TRUE,
+      'data' => theme('status_messages') . drupal_render($form),
+      'settings' => $settings,
   ));
+  exit();
 }
 
-function islandora_pid_list_remove_js() {
+function islandora_pid_list_remove_user_js() {
   // Retrieve the cached form
   $form_state = array('submitted' => FALSE);
   $form_build_id = $_POST['form_build_id'];
   $form = form_get_cache($form_build_id, $form_state);
-    
-  foreach($_POST['userlists'] as $key => $value) {
-    foreach($_POST['userlists'][$key] as $item => $index) {
-      if ($item == 'users') {
-        foreach ($_POST['userlists'][$key][$item] as $offset => $object) {
-          if(!empty($object)) {
-            $param = 'userlists';
-            $listindex = $key;
-            $foundusertext = TRUE;
-            $useroffset = $offset;
-            break;
-          }
-        }
-      }
-    }
-  }
   
-  if (!$foundusertext) {
-    foreach($_POST['alllists'] as $key => $value) {
-      foreach($_POST['alllists'][$key] as $item => $index) {
+  if (array_key_exists('userlists', $_POST)) {
+    foreach($_POST['userlists'] as $key => $value) {
+      foreach($_POST['userlists'][$key] as $item => $index) {
         if ($item == 'users') {
-          foreach ($_POST['alllists'][$key][$item] as $offset => $object) {
+          foreach ($_POST['userlists'][$key][$item] as $offset => $object) {
             if(!empty($object)) {
-              $param = 'alllists';
+              $param = 'userlists';
               $listindex = $key;
               $foundusertext = TRUE;
               $useroffset = $offset;
@@ -1011,44 +1028,162 @@ function islandora_pid_list_remove_js() {
         }
       }
     }
-  } 
-  dsm($param, 'param');
-  dsm($listindex, 'listindex');
-  dsm($listoffset, 'offset');
-  dsm($_POST, 'POST');
-  dsm($form, 'form');
+  }
+  
+  if (array_key_exists('alllists', $_POST)) {
+    if (!$foundusertext) {
+      foreach($_POST['alllists'] as $key => $value) {
+        foreach($_POST['alllists'][$key] as $item => $index) {
+          if ($item == 'users') {
+            foreach ($_POST['alllists'][$key][$item] as $offset => $object) {
+              if(!empty($object)) {
+                $param = 'alllists';
+                $listindex = $key;
+                $foundusertext = TRUE;
+                $useroffset = $offset;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
   $obj = $form[$param][$listindex]['plo']['#value'];
   $obj->remove_users(array($form[$param][$listindex]['users'][$useroffset]['user']['#value']));
-  dsm($obj, 'obj');
+ 
   
   if ($useroffset != 0) {
     unset($form[$param][$listindex]['users'][$useroffset]); 
   }
   else {
-  unset($form[$param][$listindex]);
-  $removeuser = TRUE;
+    if (user_access('Adminisiter islandora_pid_list module')) {
+      $allindex = count($_POST['alllists']);
+      
+      if ($param == 'alllists') {
+        $allindex = $listindex;
+      }
+      
+      if (array_key_exists('empty',$form['alllists'])) {
+        unset($form['alllists']['empty']);
+      }
+      $form['alllists'][$allindex] = $form[$param][$listindex];
+      unset($form['alllists'][$allindex]['users'][$useroffset]);
+      
+      $form['alllists'][$allindex]['users'][$useroffset]= array(
+        '#type' => 'item',
+        '#value' => t('There are no users associated with this list'),
+      );
+    }
+    
+    $countoffset = 0;
+    foreach($form[$param] as $key => $value) {
+      if (is_array($form[$param][$key]) && is_numeric($key)) {
+        $countoffset++;
+      }
+     }
+    
+    if ($param == 'userlists') {  
+      unset($form[$param][$listindex]);
+    }
   }
-  
-  if ($listindex == 0 && $removeuser) {
-  $form[$param]['empty'] = array(
+   
+  if ($countoffset == 1) {
+     $form[$param]['empty'] = array(
      '#type' => 'item',
      '#value' => t('No lists currently associated'),
      '#prefix' => '<div class="emptylist">',
      '#suffix' => '</div>',
-  );  
+     );  
   }
-  
-  
-  
+    
   form_set_cache($form_build_id, $form, $form_state);
   $form += array('#post' => $_POST, '#programmed' => FALSE);
   $form = form_builder($_POST['form_id'], $form, $form_state);
-  dsm($form[$param][$listindex],'test');
-  
-  
+  $form[$param][$listindex]['#collapsed'] = FALSE;  
+  dsm($form['alllists'][$allindex], 'before return');
   drupal_json(array(
       'status'   => TRUE,
       'data'     => theme('status_messages') . drupal_render($form),
     ));
+  exit();
+}
+
+function islandora_pid_list_remove_pid_js() {
+  // Retrieve the cached form
+  dsm($_POST, 'post');
+  $form_state = array('submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  $form = form_get_cache($form_build_id, $form_state);
+  dsm($form, 'form');
   
+  if (array_key_exists('userlists', $_POST)) {
+    foreach($_POST['userlists'] as $key => $value) {
+      foreach($_POST['userlists'][$key] as $item => $index) {
+        if ($item == 'pids') {
+          foreach ($_POST['userlists'][$key][$item] as $offset => $object) {
+            if(!empty($object)) {
+              $param = 'userlists';
+              $listindex = $key;
+              $foundpidtext = TRUE;
+              $pidoffset = $offset;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  if (array_key_exists('alllists', $_POST)) {
+    if (!$foundpidtext) {
+      foreach($_POST['alllists'] as $key => $value) {
+        foreach($_POST['alllists'][$key] as $item => $index) {
+          if ($item == 'pids') {
+            foreach ($_POST['alllists'][$key][$item] as $offset => $object) {
+              if(!empty($object)) {
+                $param = 'alllists';
+                $listindex = $key;
+                $foundpidtext = TRUE;
+                $pidoffset = $offset;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  $obj = $form[$param][$listindex]['plo']['#value'];
+  $obj->remove_pids(array($form[$param][$listindex]['pids'][$pidoffset]['pid']['#value']));
+   
+  $countoffset = 0;
+  dsm($form[$param][$listindex]['pids'], 'form');
+  foreach($form[$param][$listindex]['pids'] as $key => $value) {
+    if (is_array($form[$param][$listindex]['pids'][$key]) && is_numeric($key)) {
+      $countoffset++;
+    }
+  }
+  unset($form[$param][$listindex]['pids'][$pidoffset]); 
+  dsm($countoffset, 'countoffset');
+  if ($countoffset == 1) { 
+      $form[$param][$listindex]['pids'][$pidoffset]= array(
+        '#type' => 'item',
+        '#value' => t('No pids currently associated'),
+      );
+      dsm($form['alllists'][$allindex]);
+  }
+    
+  form_set_cache($form_build_id, $form, $form_state);
+  $form += array('#post' => $_POST, '#programmed' => FALSE);
+  $form = form_builder($_POST['form_id'], $form, $form_state);
+    
+  $form[$param][$listindex]['#collapsed'] = FALSE;
+  drupal_json(array(
+      'status'   => TRUE,
+      'data'     => theme('status_messages') . drupal_render($form),
+    ));
+  exit();
 }

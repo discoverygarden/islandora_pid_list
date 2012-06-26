@@ -59,7 +59,7 @@ public function remove_pids($pids) {
 
 public function remove_users($users) {
   global $user;
-  dsm($users, 'remove');
+  
   $this->userlist = array_diff($this->userlist, $users);
   if (!$this->session) {
     foreach ($users as $value) {
