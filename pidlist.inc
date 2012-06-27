@@ -174,6 +174,7 @@ private function remove_pid_db($pid) {
 }
 
 private function add_pid_db($pid) {
+  dsm('add db');
   db_query("INSERT INTO {islandora_pid_list_pids} (listid, pidid) VALUES (%d, '%s')", $this->listid, $pid);
 }
 

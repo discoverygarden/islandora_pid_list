@@ -34,7 +34,9 @@ function get_user_pid_list($params = array()) {
   }
  
   while ($listid = db_fetch_array($result)) {
-    array_push($listids, $listid['listid']);
+    if (!in_array($listid['listid'], $listids)) {
+      array_push($listids, $listid['listid']);
+    }
   }
   
   foreach ($listids as $key => $value) {
