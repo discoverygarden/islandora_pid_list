@@ -38,3 +38,8 @@ div.addusertolist div.form-item {
     width:249px;
     display:inline-block;
 }
+
+div.removelist div.form-item {
+    width:255px;
+    display:inline-block;
+}
