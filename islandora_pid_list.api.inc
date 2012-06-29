@@ -92,17 +92,15 @@ function get_user_pid_list($params = array()) {
 }
 
 function get_pid_list_by_number($listid) {
-  dsm($_SESSION['islandora_pid_list'], 'session');
-  dsm($listid, 'listid');
+  global $user;
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
   
   if (!preg_match('/session_/', $listid)) {
-    
-    module_load_include('inc', 'islandora_pid_list', 'pidlist');
     $listresult = db_query('SELECT listname, listowner from {islandora_pid_list_names} WHERE listid = %d', $listid);
-
+    $listresult = db_fetch_array($listresult);
     $params = array(
       'retrieve' => TRUE,
-      'useruid' => $uid,
+      'useruid' => $user->uid,
       'listowner' => $listresult['listowner'],
       'listname' => $listresult['listname'],
       'listid' => $listid,
