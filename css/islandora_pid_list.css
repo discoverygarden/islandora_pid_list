@@ -1,55 +1,44 @@
 div.users div.form-item {
-    width: 250px;
+    width: 200px;
     display: inline-block;
 }
 
 div.pids div.form-item {
-    width: 250px;
+    width: 200px;
     display: inline-block;
 }
 
 div.listdetails div.form-item {
-    width: 255px;
+    width: 205px;
     display: inline-block;
 }
 
 div.userlists div.form-item {
-    width: 255px;
+    width: 205px;
     display: inline-block;
 }
 
-.enter_submit {
-  position: absolute;
-  left: -2000;
-  top: -2000;
-  width: 0;
-  height: 0;
-  border: 0;
-  margin: 0;
-  padding: 0;
-}
-
 .addpid {
-  width: 253px;
+  width: 203px;
   display: inline-block;
 }
 
 div.addusertolist div.form-item {
-    width:249px;
+    width: 199px;
     display:inline-block;
 }
 
 div.removelist div.form-item {
-    width:255px;
-    display:inline-block;
+    width: 205px;
+    display: inline-block;
 }
 
 div.addlistassoc div.form-item {
-    width:253px;
-    display:inline-block;
+    width: 203px;
+    display: inline-block;
 }
 
 div.addnewlist div.form-item {
-    width:253px;
-    display:inline-block;
+    width: 203px;
+    display: inline-block;
 }

@@ -1,8 +1,10 @@
 <?php
 
 /**
-* Implementation of Schema
+* @file
+* Install and uninstall functions for the islandora_pid_list module.
 */
+
 function islandora_pid_list_schema() {
 
   $schema['islandora_pid_list_lists'] = array(

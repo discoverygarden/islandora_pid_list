@@ -1,8 +1,26 @@
 <?php
-module_load_include('inc', 'islandora_pid_list', 'pidlist');
 
+/**
+ * @file
+ * Houses helper functions used in the islandora_pid_list module
+ * 
+ */
+
+/**
+ * Retrieves lists that the specified user has access to.
+ * 
+ * @global type $user
+ *
+ * @param array $params
+ *   Which value to search.
+ *
+ * @return array
+ *   An array of PidList objects.
+ */
 function get_user_pid_list($params = array()) {
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
   global $user;
+  
   $listids = array();
   $pidlist = array();
     
@@ -17,8 +35,7 @@ function get_user_pid_list($params = array()) {
   if (array_key_exists('all', $params)) {
     $alllists = $params['all'];
   }
-  
-  
+    
   if (isset($pid)) {
     $result = db_query('SELECT listid FROM {islandora_pid_list_pids} WHERE pidid = "%s" ORDER BY listid', $pid);
   }
@@ -91,10 +108,21 @@ function get_user_pid_list($params = array()) {
   return $pidlist;
 }
 
+/**
+ * Retrieves a list given a specified ID.
+ * 
+ * @global type $user
+ * 
+ * @param integer $listid
+ *   List ID to be searched for.
+ * 
+ * @return PidList
+ *   PidList object.
+ */
 function get_pid_list_by_number($listid) {
-  global $user;
   module_load_include('inc', 'islandora_pid_list', 'pidlist');
-  
+  global $user;
+   
   if (!preg_match('/session_/', $listid)) {
     $listresult = db_query('SELECT listname, listowner from {islandora_pid_list_names} WHERE listid = %d', $listid);
     $listresult = db_fetch_array($listresult);

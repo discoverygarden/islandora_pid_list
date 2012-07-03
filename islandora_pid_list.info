@@ -1,8 +1,9 @@
 ; $Id$
 name = Islandora Pid List
-description = Allows users to build lists of pids.
-dependencies[] = fedora_repository, php_lib
+description = Allows users to build and manage lists of pids.
+dependencies[] = fedora_repository
+dependencies[] = php_lib
 package = Islandora Pid List
-version = 1.x
+version = 6.x
 core = 6.x
 
