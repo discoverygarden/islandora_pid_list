@@ -1185,17 +1185,17 @@ function islandora_pid_list_remove_pid_js() {
 function islandora_pid_list_add_user_js() {
   global $user;
   module_load_include('inc', 'php_lib', 'Ahah');
-  
+  dsm($_POST, 'post');
   list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
   
   if (array_key_exists('userlists', $_POST)) {
     foreach ($_POST['userlists'] as $key => $value) {
       foreach ($_POST['userlists'][$key] as $item => $index) {
         if ($item == 'users') {
-          $param = 'userlists';
-          $listindex = $key;
           if (is_array($index)) {
             if (array_key_exists('listadd', $index)) {
+              $param = 'userlists';
+              $listindex = $key;
               $adduser = $index['listusers'];
               $foundselect = TRUE;
               break;
@@ -1211,10 +1211,10 @@ function islandora_pid_list_add_user_js() {
       foreach ($_POST['alllists'] as $key => $value) {
         foreach ($_POST['alllists'][$key] as $item => $index) {
           if ($item == 'users') {
-            $param = 'alllists';
-            $listindex = $key;
             if (is_array($index)) {
               if (array_key_exists('listadd', $index)) {
+                $param = 'alllists';
+                $listindex = $key;
                 $adduser = $index['listusers'];
                 break;
               }  
@@ -1224,8 +1224,10 @@ function islandora_pid_list_add_user_js() {
       }
     }
   }
-  
+  dsm($listindex, 'listindex');
+  dsm($form[$param][$listindex], 'form param');
   $obj = $form[$param][$listindex]['plo']['#value'];
+  dsm($obj, 'obj');
   
   if (strlen($adduser)) {
     if ($adduser == 0) {
