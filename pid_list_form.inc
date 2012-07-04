@@ -1192,10 +1192,10 @@ function islandora_pid_list_add_user_js() {
     foreach ($_POST['userlists'] as $key => $value) {
       foreach ($_POST['userlists'][$key] as $item => $index) {
         if ($item == 'users') {
-          $param = 'userlists';
-          $listindex = $key;
           if (is_array($index)) {
             if (array_key_exists('listadd', $index)) {
+              $param = 'userlists';
+              $listindex = $key;
               $adduser = $index['listusers'];
               $foundselect = TRUE;
               break;
@@ -1211,10 +1211,10 @@ function islandora_pid_list_add_user_js() {
       foreach ($_POST['alllists'] as $key => $value) {
         foreach ($_POST['alllists'][$key] as $item => $index) {
           if ($item == 'users') {
-            $param = 'alllists';
-            $listindex = $key;
             if (is_array($index)) {
               if (array_key_exists('listadd', $index)) {
+                $param = 'alllists';
+                $listindex = $key;
                 $adduser = $index['listusers'];
                 break;
               }  
@@ -1224,9 +1224,8 @@ function islandora_pid_list_add_user_js() {
       }
     }
   }
-  
   $obj = $form[$param][$listindex]['plo']['#value'];
-  
+    
   if (strlen($adduser)) {
     if ($adduser == 0) {
       $outputuser = t('Anonymous');
