@@ -1185,7 +1185,7 @@ function islandora_pid_list_remove_pid_js() {
 function islandora_pid_list_add_user_js() {
   global $user;
   module_load_include('inc', 'php_lib', 'Ahah');
-  dsm($_POST, 'post');
+  
   list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
   
   if (array_key_exists('userlists', $_POST)) {
@@ -1224,11 +1224,8 @@ function islandora_pid_list_add_user_js() {
       }
     }
   }
-  dsm($listindex, 'listindex');
-  dsm($form[$param][$listindex], 'form param');
   $obj = $form[$param][$listindex]['plo']['#value'];
-  dsm($obj, 'obj');
-  
+    
   if (strlen($adduser)) {
     if ($adduser == 0) {
       $outputuser = t('Anonymous');
