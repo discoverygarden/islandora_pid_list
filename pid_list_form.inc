@@ -241,7 +241,49 @@ function islandora_pid_list_list_form($form_state) {
         ),
       ); 
     }
-     
+    elseif (in_array($user->uid, $value->userlist)) {
+      $piduser = $user->uid;
+      $tempuser = user_load($piduser);
+      $fku = array( 
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#title' => t('Users'),
+      );
+
+      $tempuser = t('Yourself');
+      
+      $fku[] = array(
+        '#prefix' => '<div class="users">',
+        '#suffix' => '</div>',
+        'label' => array(
+          '#type' => 'item',
+          '#value' => $tempuser,
+        ),
+        'user' => array(
+          '#type' => 'value',
+          '#value' => $piduser,
+        ),
+        'list-id' => array(
+          '#type' => 'value',
+          '#value' => $key,
+        ),
+        'remove' => array(
+          '#type' => 'image_button',
+          '#src' => drupal_get_path('module', 'islandora_pid_list') . '/images/minus_small.png',
+          '#ahah' => array(
+            'event' => 'click',
+            'path' => "pidlist/ahah/remove/user",
+            'wrapper' => "allpidlists",
+            'method' => 'replace',
+          ),
+        ),
+        'plo' => array(
+          '#type' => 'value',
+          '#value' => $value,
+        )
+      );      
+    } 
     $form['userlists'][$key]['pids'] = array( 
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
@@ -781,6 +823,19 @@ function islandora_pid_list_pid_form($form_state, $pid) {
           ),
         );
       }
+      else {
+        $form['userlists'][$key]['remove'] = array(
+          '#type' => 'image_button',
+          '#src' => drupal_get_path('module', 'islandora_pid_list') . '/images/minus_small.png', 
+          '#suffix' => '</div>',
+          '#ahah' => array(
+            'event' => 'click',
+            'path' => "pidlist/ahah/remove/listassociation",
+            'wrapper' => "listassoc",
+            'method' => 'replace',
+          ),
+        );
+      }
       $form['userlists'][$key]['list-id'] = array(
         '#type' => 'value',
         '#value' => $key
@@ -1097,7 +1152,7 @@ function islandora_pid_list_remove_user_js() {
       }
     }
   }
-  
+    
   $obj = $form[$param][$listindex]['plo']['#value'];
   $listname = $obj->listname;
     
@@ -1106,7 +1161,7 @@ function islandora_pid_list_remove_user_js() {
  
   if (islandora_pid_list_object_access($obj, $listname)) {
     $removeuser = $form[$param][$listindex]['users'][$useroffset]['user']['#value'];
-
+   
     if ($removeuser == 0) {
       $outputuser = t('Anonymous');
     }
@@ -1513,6 +1568,8 @@ function islandora_pid_list_add_association_js() {
 function islandora_pid_list_remove_association_js() {
   module_load_include('inc', 'php_lib', 'Ahah');
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
+  global $user;
   
   list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
   
@@ -1546,15 +1603,25 @@ function islandora_pid_list_remove_association_js() {
   $obj = get_pid_list_by_number($obj->listid);
  
   if (islandora_pid_list_object_access($obj, $listname)) {
-    $removepid = $form['pid']['#value'];
-    $obj->remove_pids(array($removepid));
+    if (user_access("Manage other users' pidlists") || $user->uid === $obj->listowner) {
+      $removepid = $form['pid']['#value'];
+      $obj->remove_pids(array($removepid));
 
-    drupal_set_message(t('The pid %removepid has removed from %listname',
-      array(
-        '%listname' => $obj->listname,
-        '%removepid' => $removepid,
-      )
-    ));  
+      drupal_set_message(t('The pid %removepid has removed from %listname',
+        array(
+          '%listname' => $obj->listname,
+          '%removepid' => $removepid,
+        )
+      ));
+    }
+    else {
+      $obj->remove_users(array($user->uid));
+      drupal_set_message(t('You have removed yourself from %listname',
+          array(
+            '%listname' => $obj->listname,
+          )
+      ));
+    }
   }
   
   $form = Ahah::rebuildForm($form_id, $form_build_id, $form, $form_state);
@@ -1580,7 +1647,7 @@ function islandora_pid_list_remove_association_js() {
  */
 function islandora_pid_list_object_access(PidList $obj, $listname) {
   global $user;
-  
+    
   if (!$obj->session) {
     if (is_null($obj->listname)) {
       drupal_set_message(t("The list %listname no longer exists.",
