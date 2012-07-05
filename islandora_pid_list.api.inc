@@ -126,12 +126,29 @@ function get_pid_list_by_number($listid) {
   if (!preg_match('/session_/', $listid)) {
     $listresult = db_query('SELECT listname, listowner from {islandora_pid_list_names} WHERE listid = %d', $listid);
     $listresult = db_fetch_array($listresult);
+    
+    $userresult = db_query('SELECT uid from {islandora_pid_list_lists} WHERE listid = %d', $listid);
+    $userlist = array();
+    
+    while ($users = db_fetch_array($userresult)) {
+      array_push($userlist, $users['uid']);
+    }
+    
+    $pidresult = db_query('SELECT pidid from {islandora_pid_list_pids} WHERE listid = %d', $listid);
+    $pidlist = array();
+    
+    while ($pids = db_fetch_array($pidresult)) {
+      array_push($pidlist, $pids['pidid']);
+    }
+    
     $params = array(
       'retrieve' => TRUE,
       'useruid' => $user->uid,
       'listowner' => $listresult['listowner'],
       'listname' => $listresult['listname'],
       'listid' => $listid,
+      'listusers' => $userlist,
+      'listpids' => $pidlist,
     );
     $templist = new PidList($params);
   }
