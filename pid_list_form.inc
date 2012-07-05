@@ -961,6 +961,7 @@ return $form;
  */
 function islandora_pid_list_add_pid_js() {
   module_load_include('inc', 'php_lib', 'Ahah');
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
 
   list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
@@ -1049,6 +1050,7 @@ function islandora_pid_list_add_pid_js() {
  */
 function islandora_pid_list_remove_user_js() {
   module_load_include('inc', 'php_lib', 'Ahah');
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
     
   list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
@@ -1133,6 +1135,7 @@ function islandora_pid_list_remove_user_js() {
  */
 function islandora_pid_list_remove_pid_js() {
   module_load_include('inc', 'php_lib', 'Ahah');
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
    
   list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
@@ -1203,6 +1206,7 @@ function islandora_pid_list_remove_pid_js() {
  */
 function islandora_pid_list_add_user_js() {
   module_load_include('inc', 'php_lib', 'Ahah');
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
   
   list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
@@ -1287,6 +1291,7 @@ function islandora_pid_list_add_user_js() {
  */
 function islandora_pid_list_remove_list_js() {
   module_load_include('inc', 'php_lib', 'Ahah');
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
   
   list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
@@ -1341,6 +1346,7 @@ function islandora_pid_list_remove_list_js() {
  */
 function islandora_pid_list_update_name_js() {
   module_load_include('inc', 'php_lib', 'Ahah');
+  module_load_include('inc', 'islandora_pid_list', 'pidlist');
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
   
   list($form_id, $form_build_id, $form, $form_state) = Ahah::getFormInfo();
@@ -1476,7 +1482,7 @@ function islandora_pid_list_add_association_js() {
     }
     elseif ($_POST[$param]['listoptions'] != 'default') {
       $list = get_pid_list_by_number($_POST[$param]['listoptions']);
-      dsm($list, 'list');
+      
         if (islandora_pid_list_object_access($list, $list->listname)) {
           $addpid = $form['pid']['#value'];
           $list->add_pids(array($addpid));
@@ -1574,6 +1580,7 @@ function islandora_pid_list_remove_association_js() {
  */
 function islandora_pid_list_object_access(PidList $obj, $listname) {
   global $user;
+  
   if (!$obj->session) {
     if (is_null($obj->listname)) {
       drupal_set_message(t("The list %listname no longer exists.",
