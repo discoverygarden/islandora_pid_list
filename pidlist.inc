@@ -144,8 +144,7 @@ class PidList {
         foreach ($users as $value) {
           $this->remove_user_db($value);
         }
-        if (count($users) == 1) {
-          $this->listowner = "";
+        if (in_array($this->listowner, $users)) {
           db_query("UPDATE {islandora_pid_list_names} SET listowner = NULL WHERE listid = %d", $this->listid);
         }
       }
