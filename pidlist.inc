@@ -44,7 +44,7 @@ class PidList {
   /**
    * The owner of the object.
    * 
-   * @var string
+   * @var integer
    */
   public $listowner;
   
@@ -105,8 +105,13 @@ class PidList {
     $this->pidlist = array_diff($this->pidlist, $pids);
 
     if (!$this->session) {
-      foreach ($pids as $value) {
-        $this->remove_pid_db($value);
+      if ($this->management_access()) {
+        foreach ($pids as $value) {
+          $this->remove_pid_db($value);
+        }
+      }
+      else {
+        throw new Exception(t("You do not have access to remove pids from the list $this->listname"));
       }
     } 
     else {
@@ -135,12 +140,19 @@ class PidList {
 
     $this->userlist = array_diff($this->userlist, $users);
     if (!$this->session) {
-      foreach ($users as $value) {
-        $this->remove_user_db($value);
+      if ($this->management_access()) {
+        foreach ($users as $value) {
+          $this->remove_user_db($value);
+        }
+        if (in_array($this->listowner, $users)) {
+          db_query("UPDATE {islandora_pid_list_names} SET listowner = NULL WHERE listid = %d", $this->listid);
+        }
       }
-      if (count($users) == 1) {
-        $this->listowner = "";
-        db_query("UPDATE {islandora_pid_list_names} SET listowner = NULL WHERE listid = %d", $this->listid);
+      elseif (in_array($this->useruid, $users)) {
+        $this->remove_user_db($this->useruid);
+      }
+      else {
+         throw new Exception(t("You do not have access to remove users from the list $this->listname"));
       }
     }
     else {
@@ -173,7 +185,12 @@ class PidList {
           array_push($this->pidlist, $value);
 
             if (!$this->session) {
-            $this->add_pid_db($value);
+              if ($this->management_access()) {
+                $this->add_pid_db($value);
+              }
+              else {
+                throw new Exception(t("You do not have access to add pids to the list $this->listname"));
+              }
             }
             else {
             $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
@@ -200,7 +217,12 @@ class PidList {
         array_push($this->userlist, $value);
 
           if (!$this->session) {
-            $this->add_user_db($value);
+            if ($this->management_access()) {
+              $this->add_user_db($value);
+            }
+            else {
+              throw new Exception(t("You do not have access to add users to the list $this->listname"));
+            }
           }
           else {
             $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
@@ -241,6 +263,7 @@ class PidList {
    */
   public function remove_list() {
     if (!$this->session) {
+      if ($this->management_access()) {
       db_query("DELETE FROM {islandora_pid_list_names} WHERE listid = %d", $this->listid);
 
       foreach ($this->userlist as $key => $value) {
@@ -251,6 +274,10 @@ class PidList {
         db_query("DELETE FROM {islandora_pid_list_pids} WHERE listid = %d", $this->listid);
         }
       }
+      else {
+        throw new Exception(t("You do not have access to remove the list $this->listname"));
+      }
+    }
     else {
       unset($_SESSION['islandora_pid_list'][$this->listid]);
     } 
@@ -311,6 +338,15 @@ class PidList {
     else {
       $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
       $superserial->listname[$key][$this->listid][$name];   
+    }
+  }
+  
+  public function management_access() {
+    if ($this->useruid === $this->listowner || user_access("Manage other users' pidlists")) {
+      return TRUE;
+    }
+    else {
+      return FALSE;
     }
   }
 }
