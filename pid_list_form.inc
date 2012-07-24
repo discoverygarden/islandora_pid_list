@@ -930,12 +930,11 @@ function islandora_pid_list_pid_form($form_state, $pid) {
     '#prefix' => '<div class="addlistassoc">',
     '#suffix' => '</div>',
       '#ahah' => array(
-        'event' => 'click',
         'path' => "pidlist/ahah/add/listassociation",
         'wrapper' => "listassoc",
-        'method' => 'replace',
-        ),
+    ),
   );
+  
   if ($form_state['post']['userlists']['listoptions'] == 'create') {
     $form['userlists']['addlist'] = array(
       '#type' => 'textfield',
@@ -1010,9 +1009,9 @@ function islandora_pid_list_pid_form($form_state, $pid) {
     }
     if ($alllistscount == 0) {
       $form['alllists']['empty'] = array(
-      '#value' => t('No lists currently associated'),
-      '#prefix' => '<div class="emptypid">',
-      '#suffix' => '</div>',
+        '#value' => t('No lists currently associated'),
+        '#prefix' => '<div class="emptypid">',
+        '#suffix' => '</div>',
       );  
     }
   foreach ($optionsall as $key => $value) {
@@ -1021,17 +1020,15 @@ function islandora_pid_list_pid_form($form_state, $pid) {
     }
   }
     $form['alllists']['listoptions'] = array(
-    '#type' => 'select',
-    '#default_value' => $form_state['post']['userlists']['listoptions'],
-    '#options' => $optionsall,
-    '#prefix' => '<div class="addlistassoc">',
-    '#suffix' => '</div>',
+      '#type' => 'select',
+      '#default_value' => $form_state['post']['userlists']['listoptions'],
+      '#options' => $optionsall,
+      '#prefix' => '<div class="addlistassoc">',
+      '#suffix' => '</div>',
       '#ahah' => array(
-        'event' => 'click',
         'path' => "pidlist/ahah/add/listassociation",
         'wrapper' => "listassoc",
-        'method' => 'replace',
-        ),
+      ),
     );
   }
 return $form;
@@ -1522,7 +1519,7 @@ function islandora_pid_list_add_association_js() {
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
   
   global $user;
-  
+  dsm($_POST, 'post');
   if (array_key_exists('userlists', $_POST) && $_POST['userlists']['listoptions'] != 'default') {
     $param = 'userlists';
   }
