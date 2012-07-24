@@ -1519,7 +1519,7 @@ function islandora_pid_list_add_association_js() {
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
   
   global $user;
-  dsm($_POST, 'post');
+  
   if (array_key_exists('userlists', $_POST) && $_POST['userlists']['listoptions'] != 'default') {
     $param = 'userlists';
   }
