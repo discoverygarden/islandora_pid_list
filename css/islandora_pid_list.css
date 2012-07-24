@@ -1,39 +1,85 @@
 div.users div.form-item {
     width: 200px;
     display: inline-block;
+    display: -moz-inline-block;
+    *display:inline; 
+    *zoom:1;
+    *vertical-align: 2%;
 }
 
 div.pids div.form-item {
     width: 200px;
     display: inline-block;
+    display: -moz-inline-block;
+    *display:inline; 
+    *zoom:1; 
+    *vertical-align: 2%;
 }
 
 div.listdetails div.form-item {
     width: 205px;
     display: inline-block;
+    display: -moz-inline-block;
+    *display:inline; 
+    *zoom:1; 
+    *vertical-align: 2%;
 }
 
 div.userlists div.form-item {
     width: 205px;
     display: inline-block;
+    display: -moz-inline-block;
+    *display:inline; 
+    *zoom:1; 
+    *vertical-align: 2%;
 }
 
-.addpid {
-  width: 203px;
+div.addpid {
+  width: 201px;
   display: inline-block;
+  display: -moz-inline-block;
+  *display:inline; 
+  *zoom:1; 
+  *vertical-align: -1em;
 }
 
 div.addusertolist div.form-item {
-    width: 199px;
-    display:inline-block;
+  width: 199px;
+  display:inline-block;
+  display: -moz-inline-block;
+  *display:inline; 
+  *zoom:1; 
+  *vertical-align: 2%;
 }
 
 div.removelist div.form-item {
-    width: 205px;
-    display: inline-block;
+  width: 205px;
+  display: inline-block;
+  display: -moz-inline-block;
+  *display:inline; 
+  *zoom:1; 
+  *vertical-align: 2%;
+}
+
+div.addlistassoc div.form-item {
+  width: 203px;
+  display: inline-block;
+  display: -moz-inline-block;  
+  *display:inline; 
+  *zoom:1; 
+  *vertical-align: 2%;
 }
 
 div.addnewlist div.form-item {
-    width: 203px;
-    display: inline-block;
+  width: 203px;
+  display: inline-block;
+  display: -moz-inline-block;
+  *display:inline; 
+  *zoom:1; 
+  *vertical-align: 2%;
+}
+
+.ui-tabs-hide {
+  *display: none;
+  *position: relative;
 }
