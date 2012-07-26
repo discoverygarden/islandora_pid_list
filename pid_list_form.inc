@@ -308,9 +308,9 @@ function islandora_pid_list_list_form($form_state) {
       foreach ($value->pidlist as $itr => $pid) {
         $fedoraobject = islandora_object_load($pid);
         $pidvalue = $pid;
-
+        
         if ($fedoraobject) {
-          $pidvalue = l($pid, 'fedora/repository/' . $pid, array(
+          $pidvalue = l($fedoraobject->label, 'fedora/repository/' . $pid, array(
             'attributes' => array(
               'target' => '_blank'
               )));
@@ -608,7 +608,7 @@ function islandora_pid_list_list_form($form_state) {
           $pidvalue = $pid;
 
           if ($fedoraobject) {
-            $pidvalue = l($pid, 'fedora/repository/' . $pid, array(
+            $pidvalue = l($fedoraobject->label, 'fedora/repository/' . $pid, array(
               'attributes' => array(
                 'target' => '_blank'
                 )));
