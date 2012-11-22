@@ -331,13 +331,12 @@ class PidList {
    *   The new name of the object. 
    */
   public function change_list_name($name) {
-    $this -> listname = $name;
-    if (!$session) {
+    $this->listname = $name;
+    if (!$this->session) {
       db_query("UPDATE {islandora_pid_list_names} SET listname = '%s' WHERE listid = %d", $name, $this->listid);
     }
     else {
-      $superserial = unserialize($_SESSION['islandora_pid_list'][$this->listid]);
-      $superserial->listname[$key][$this->listid][$name];   
+      $_SESSION['islandora_pid_list'][$this->listid] = serialize($this);
     }
   }
   

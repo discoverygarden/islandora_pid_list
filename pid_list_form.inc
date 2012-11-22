@@ -1071,7 +1071,7 @@ function islandora_pid_list_add_pid_js() {
   
   $obj = $form[$param][$listindex]['plo']['#value'];
   $listname = $obj->listname;
-  ;  
+  
   // Needed to account for concurrent users making changes on lists.
   $obj = get_pid_list_by_number($obj->listid);
    
@@ -1438,7 +1438,7 @@ function islandora_pid_list_remove_list_js() {
  * 
  * @see islandora_pid_list_menu() 
  */
-function islandora_pid_list_update_name_js() {
+function islandora_pid_list_update_name_js($form, $form_state) {
   module_load_include('inc', 'php_lib', 'Ahah');
   module_load_include('inc', 'islandora_pid_list', 'pidlist');
   module_load_include('inc', 'islandora_pid_list', 'islandora_pid_list.api');
